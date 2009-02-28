@@ -453,6 +453,5 @@ InputPlugin usf_ip = {
 
 static InputPlugin *usf_iplist[] = { &usf_ip, NULL };
 
-//SIMPLE_INPUT_PLUGIN(lazyusf,usf_iplist);
 DECLARE_PLUGIN(usf_iplist, NULL, NULL, usf_iplist, NULL, NULL, NULL, NULL, NULL);
 
