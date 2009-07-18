@@ -10,7 +10,7 @@ LD =  g++
 OPTS = -O2
 ROPTS = -O1
 
-usf : $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o
+lazyusf.so : $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o
 	$(LD) $(LDFLAGS) usf $^
 
 .c.o:
