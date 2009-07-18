@@ -11,7 +11,7 @@ OPTS = -O2
 ROPTS = -O1
 
 lazyusf.so : $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o
-	$(LD) $(LDFLAGS) usf $^
+	$(LD) $(LDFLAGS) $^
 
 .c.o:
 	$(GCC) $(CFLAGS) $(OPTS) $*.c
