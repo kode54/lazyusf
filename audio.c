@@ -39,26 +39,65 @@ void OpenSound(void)
 		perror("open of /dev/dsp failed");
 		exit(1);
 	}   */
-
-	if (pcontext->output->open_audio(FMT_S16_LE,SampleRate,2) == 0)
+	
+	if (pcontext->output->open_audio(FMT_S16_NE,SampleRate,2) == 0)
 		printf("FAIL!\n");
 }
 
 // playback->pass_audio(playback,FMT_S16_LE,vgmstream->channels , l , buffer , &playback->playing );
 
+void AddBuffer(unsigned char *buffer, long count)
+{
+	const int mask = ~((((16 / 8) * 2)) - 1);
 
-void AddBuffer(unsigned char *buf, unsigned int length) {
+	if (buffer == NULL)
+	{
+		pcontext->playing = FALSE;
+		pcontext->eof = TRUE;
+
+		return;
+	}
+
+	while (count > 0)
+	{
+		int t = pcontext->output->buffer_free() & mask;
+		if (t > count)
+			pcontext->pass_audio(pcontext, FMT_S16_NE, 2, count, buffer, NULL);
+		else
+		{
+			if (t)
+				pcontext->pass_audio(pcontext, FMT_S16_NE, 2, t, buffer, NULL);
+
+			g_usleep((count-t)*1000*5/441/2);
+		}
+		count -= t;
+		buffer += t;
+	}
+}
+
+void AddBuffer33(unsigned char *buf, unsigned int length) {
+	const int mask = ~((((16 / 8) * 2)) - 1);
 	pcontext->playing = 1;
-  	pcontext->eof = 0;
+  	pcontext->eof = 0;	
 
-  	while ((pcontext->output->buffer_free () < length) && pcontext->playing == TRUE)
-  		usleep(5000);
 
-	pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
+  	//if (t > length)
+		//pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
+	//printf("%d\n", pcontext->output->buffer_free () );
+	
+	while ((pcontext->output->buffer_free () < (length))/* && pcontext->playing == TRUE*/)
+  		g_usleep(10000);
+
+
+	//while(pcontext->playing && pcontext->output->buffer_playing()) g_usleep(30);
+	
+	//pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
+	pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , buf , &pcontext->playing );
 
 }
 uint8_t buffer[131072];
 uint32_t buffersize = 0;
+
 
 void AddBuffer3(unsigned char *buf, unsigned int length) {
 	int32_t i = 0;
@@ -81,13 +120,17 @@ void AddBuffer3(unsigned char *buf, unsigned int length) {
 
 	buffersize+=length;
 
-	if(buffersize > (32768-length)) {
+	if(buffersize > (15000-length)) {
 
 		//writeAudio(hWaveOut,buf, length);
 		//play_time += ((double)(buffersize >> 2) / (double)SampleRate);
+		printf("%d\n", pcontext->output->buffer_free () );
+		while ((pcontext->output->buffer_free () < (buffersize))/* && pcontext->playing == TRUE*/)
+  			g_usleep(10000);
 		pcontext->playing = 1;
   		pcontext->eof = 0;
 		pcontext->pass_audio(pcontext,FMT_S16_LE,2 , buffersize , buffer , &pcontext->playing );
+		//AddBuffer2(buffer, buffersize);
 
 		buffersize = 0;
 
@@ -130,8 +173,8 @@ void AiLenChanged(void) {
 	}
 
 	if(enableFIFOfull) {
-		if(AI_STATUS_REG&0x40000000)
-			AI_STATUS_REG|=0x80000000;
+		//if(AI_STATUS_REG&0x40000000)
+			//AI_STATUS_REG|=0x80000000;
 	}
 
 	AI_STATUS_REG|=0x40000000;

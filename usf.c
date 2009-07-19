@@ -291,8 +291,9 @@ void usf_file_info_box(gchar *pFile)
 
 int usf_get_time(InputPlayback *context)
 {
-	//return PlayTime();
-	return usf_ip.output->output_time();
+	if(!context->output->buffer_playing())
+		return -1;
+	return context->output->output_time();
 }
 
 void usf_play(InputPlayback *context)
