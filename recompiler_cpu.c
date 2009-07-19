@@ -2557,6 +2557,8 @@ void StartRecompilerCPU (void ) {
 	uintptr_t Addr, tt;
 	void (*Block)(void) = 0;
 
+	printf("Starting recompiler cpu\n");
+
 	InitExceptionHandler();
 
 	ResetRecompCode();

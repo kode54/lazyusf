@@ -36,6 +36,7 @@ int8_t title[100];
 uint8_t title_format[] = "%game% - %title%";
 
 extern int32_t RSP_Cpu;
+extern int32_t ResampleOn, UseResampler;
 
 uint32_t get_length_from_string(uint8_t * str_length) {
 	uint32_t ttime = 0, temp = 0, mult = 1;
@@ -251,7 +252,7 @@ void usf_init()
 {
 	use_audiohle = 0;
 	use_interpreter = 0;
-	RSP_Cpu = 0;
+	RSP_Cpu = 0; // 0 is recompiler, 1 is interpreter
 }
 
 void usf_about()
@@ -329,6 +330,7 @@ void usf_play(InputPlayback *context)
 	}
 
 	pcontext = context;
+	ResampleOn = 0;
 	decode_thread = g_thread_self();
     context->set_pb_ready(context);
 
@@ -342,7 +344,7 @@ void usf_play(InputPlayback *context)
     	return 0;
     }
 
-    context->set_params(context,title,usf_length,SampleRate*4,SampleRate,2);
+    context->set_params(context,title,usf_length,-1,SampleRate,2);
 
     cpu_running = 1;
 

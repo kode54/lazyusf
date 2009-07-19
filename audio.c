@@ -28,9 +28,18 @@ int32_t bufptr = 0;
 int32_t AudioFirst = 0;
 int32_t first = 1;
 
+static uint32_t ResampleRate = 44100;
+int32_t ResampleOn = 0, UseResampler = 1;
+
+static int32_t samplebuf[65536];
+static int16_t histl[4], histr[4], hp = 0;
 
 void OpenSound(void)
 {
+
+	hp = 0;
+	memset(&histl[0], 0, 8);
+	memset(&histr[0], 0, 8);
   	/*if(fd != 0) {
   		printf("already open!\n");
   	}
@@ -39,46 +48,58 @@ void OpenSound(void)
 		perror("open of /dev/dsp failed");
 		exit(1);
 	}   */
+	ResampleOn = 0;
 	
-	if (pcontext->output->open_audio(FMT_S16_NE,SampleRate,2) == 0)
-		printf("FAIL!\n");
+	if (pcontext->output->open_audio(FMT_S16_NE,SampleRate,2) == 0) {
+		if (UseResampler) {
+			if(pcontext->output->open_audio(FMT_S16_NE,ResampleRate,2) == 0) {
+			/*couldnt start the outputter*/
+			cpu_running = 0;
+			} else {
+				printf("Using resampler\n");
+				ResampleOn = 1;
+			}
+		}
+	} else {
+		printf("SUCCESS! - %d\n", SampleRate);
+	}
 }
 
 // playback->pass_audio(playback,FMT_S16_LE,vgmstream->channels , l , buffer , &playback->playing );
 
-void AddBuffer(unsigned char *buffer, long count)
-{
+
+
+void AddBuffer(unsigned char *buf, unsigned int length) {
 	const int mask = ~((((16 / 8) * 2)) - 1);
-
-	if (buffer == NULL)
-	{
-		pcontext->playing = FALSE;
-		pcontext->eof = TRUE;
-
-		return;
-	}
-
-	while (count > 0)
-	{
-		int t = pcontext->output->buffer_free() & mask;
-		if (t > count)
-			pcontext->pass_audio(pcontext, FMT_S16_NE, 2, count, buffer, NULL);
-		else
-		{
-			if (t)
-				pcontext->pass_audio(pcontext, FMT_S16_NE, 2, t, buffer, NULL);
-
-			g_usleep((count-t)*1000*5/441/2);
-		}
-		count -= t;
-		buffer += t;
-	}
-}
-
-void AddBuffer33(unsigned char *buf, unsigned int length) {
-	const int mask = ~((((16 / 8) * 2)) - 1);
+	int32_t i = 0, ia = 0;
+	uint32_t r;  
 	pcontext->playing = 1;
-  	pcontext->eof = 0;	
+  	pcontext->eof = 0;
+
+	if(ResampleOn) {
+		r = SampleRate * 0x1000;
+		r /= ResampleRate;
+
+
+		for(i = 0; i < ((length >> 2) << 12); ia++, i+=r) {
+			uint32_t l =0, r = 0;
+			
+			histr[hp] = (int16_t)(((uint32_t*)buf)[i>>12] >> 16);
+			histl[hp] = ((int32_t*)buf)[i>>12] & 0xffff;
+
+			l = (histl[0] + histl[1]) >> 1;
+			r = (histr[0] + histr[1]) >> 1;
+
+			((int16_t*)&samplebuf[ia])[0] = l;
+			((int16_t*)&samplebuf[ia])[1] = r;
+
+			//hp = (hp+1)&3;
+			
+			hp++;
+			if(hp>1) hp = 0;
+			
+		}
+	}
 
 
   	//if (t > length)
@@ -86,59 +107,18 @@ void AddBuffer33(unsigned char *buf, unsigned int length) {
 	//printf("%d\n", pcontext->output->buffer_free () );
 	
 	while ((pcontext->output->buffer_free () < (length))/* && pcontext->playing == TRUE*/)
-  		g_usleep(10000);
+  		g_usleep(20000);
 
 
 	//while(pcontext->playing && pcontext->output->buffer_playing()) g_usleep(30);
 	
 	//pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
-	pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , buf , &pcontext->playing );
+	if(ResampleOn)
+		pcontext->pass_audio(pcontext,FMT_S16_NE,2 , ia<<2 , samplebuf , &pcontext->playing );
+	else
+		pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , buf , &pcontext->playing );
 
 }
-uint8_t buffer[131072];
-uint32_t buffersize = 0;
-
-
-void AddBuffer3(unsigned char *buf, unsigned int length) {
-	int32_t i = 0;
-	if(!AudioFirst) {
-		AudioFirst = 1;
-
-
-	}
-
-	for(i = 0; i < (length >> 1); i+=2) {
-		int32_t r = ((short*)buf)[i];
-		int32_t l = ((short*)buf)[i + 1];
-
-		r = (r * rel_volume) >> 8;
-		l = (l * rel_volume) >> 8;
-
-		((short*)buffer)[(buffersize>>1) + i + 1] = r;
-		((short*)buffer)[(buffersize>>1) + i] = l;
-	}
-
-	buffersize+=length;
-
-	if(buffersize > (15000-length)) {
-
-		//writeAudio(hWaveOut,buf, length);
-		//play_time += ((double)(buffersize >> 2) / (double)SampleRate);
-		printf("%d\n", pcontext->output->buffer_free () );
-		while ((pcontext->output->buffer_free () < (buffersize))/* && pcontext->playing == TRUE*/)
-  			g_usleep(10000);
-		pcontext->playing = 1;
-  		pcontext->eof = 0;
-		pcontext->pass_audio(pcontext,FMT_S16_LE,2 , buffersize , buffer , &pcontext->playing );
-		//AddBuffer2(buffer, buffersize);
-
-		buffersize = 0;
-
-	}
-
-}
-
-
 
 void AiLenChanged(void) {
 	int32_t length = 0;
@@ -173,8 +153,8 @@ void AiLenChanged(void) {
 	}
 
 	if(enableFIFOfull) {
-		//if(AI_STATUS_REG&0x40000000)
-			//AI_STATUS_REG|=0x80000000;
+		if(AI_STATUS_REG&0x40000000)
+			AI_STATUS_REG|=0x80000000;
 	}
 
 	AI_STATUS_REG|=0x40000000;
