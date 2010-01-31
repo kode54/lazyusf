@@ -10,17 +10,15 @@
 #include <sys/ioctl.h>
 #include <linux/soundcard.h>
 
-
 #include <audacious/util.h>
-#include <audacious/configdb.h>
 #include <audacious/plugin.h>
 #include <audacious/output.h>
 #include <audacious/i18n.h>
-#include <audacious/strings.h>
 
 #include <unistd.h>
 #include <pthread.h>
 #include <stdlib.h>
+
 extern InputPlayback * pcontext;
 
 int32_t SampleRate = 0, fd = 0, firstWrite = 1, curHeader = 0;
@@ -40,16 +38,9 @@ void OpenSound(void)
 	hp = 0;
 	memset(&histl[0], 0, 8);
 	memset(&histr[0], 0, 8);
-  	/*if(fd != 0) {
-  		printf("already open!\n");
-  	}
-  	fd = open("/dev/dsp", O_WRONLY);
-	if (fd < 0) {
-		perror("open of /dev/dsp failed");
-		exit(1);
-	}   */
+
 	ResampleOn = 0;
-	
+
 	if (pcontext->output->open_audio(FMT_S16_NE,SampleRate,2) == 0) {
 		if (UseResampler) {
 			if(pcontext->output->open_audio(FMT_S16_NE,ResampleRate,2) == 0) {
@@ -65,14 +56,11 @@ void OpenSound(void)
 	}
 }
 
-// playback->pass_audio(playback,FMT_S16_LE,vgmstream->channels , l , buffer , &playback->playing );
-
-
 
 void AddBuffer(unsigned char *buf, unsigned int length) {
 	const int mask = ~((((16 / 8) * 2)) - 1);
 	int32_t i = 0, ia = 0;
-	uint32_t r;  
+	uint32_t r;
 	pcontext->playing = 1;
   	pcontext->eof = 0;
 
@@ -83,7 +71,7 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 
 		for(i = 0; i < ((length >> 2) << 12); ia++, i+=r) {
 			uint32_t l =0, r = 0;
-			
+
 			histr[hp] = (int16_t)(((uint32_t*)buf)[i>>12] >> 16);
 			histl[hp] = ((int32_t*)buf)[i>>12] & 0xffff;
 
@@ -94,10 +82,10 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 			((int16_t*)&samplebuf[ia])[1] = r;
 
 			//hp = (hp+1)&3;
-			
+
 			hp++;
 			if(hp>1) hp = 0;
-			
+
 		}
 	}
 
@@ -105,13 +93,14 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
   	//if (t > length)
 		//pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
 	//printf("%d\n", pcontext->output->buffer_free () );
-	
-	while ((pcontext->output->buffer_free () < (length))/* && pcontext->playing == TRUE*/)
-  		g_usleep(20000);
+
+	//while ((pcontext->output->buffer_free () < (length))/* && pcontext->playing == TRUE*/)
+  	//	sleep(20000);
+
 
 
 	//while(pcontext->playing && pcontext->output->buffer_playing()) g_usleep(30);
-	
+
 	//pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
 	if(ResampleOn)
 		pcontext->pass_audio(pcontext,FMT_S16_NE,2 , ia<<2 , samplebuf , &pcontext->playing );

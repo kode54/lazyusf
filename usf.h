@@ -16,14 +16,9 @@
 
 extern int8_t filename[512], title[100];
 extern uint32_t cpu_running, use_interpreter, use_audiohle, is_paused, rel_volume, cpu_stopped;
+extern uint32_t is_fading, fade_type, fade_time, play_time, is_seeking, seek_backwards, seek_time;
 
 extern uint32_t enablecompare, enableFIFOfull;
-
-
-
-int LoadUSF(char *fn) ;
-
-
 
 
 #endif
