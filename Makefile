@@ -8,8 +8,8 @@ GCC = gcc
 GPP = g++
 LD =  g++
 
-OPTS = -g
-ROPTS = -g
+OPTS = -O2
+ROPTS = -O2
 
 all: lazyusf.so
 

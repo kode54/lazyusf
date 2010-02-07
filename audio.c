@@ -27,7 +27,7 @@ int32_t AudioFirst = 0;
 int32_t first = 1;
 /*   */
 
-static int32_t samplebuf[65536];
+static int16_t samplebuf[65536];
 
 void OpenSound(void)
 {
@@ -41,7 +41,7 @@ extern GThread * decode_thread;
 
 void AddBuffer(unsigned char *buf, unsigned int length) {
 	const int mask = ~((((16 / 8) * 2)) - 1);
-	int32_t i = 0, ia = 0;
+	int32_t i = 0, ia = 0, out = 0;
 	uint32_t r;
 	
 	if(!cpu_running)
@@ -55,12 +55,18 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 		return;
 	}
 	
+	for(out = i = 0; i < (length >> 1); i+=2)
+	{
+		samplebuf[out++] = ((int16_t*)buf)[i+1];
+		samplebuf[out++] = ((int16_t*)buf)[i];
+	}
+	
 	pcontext->playing = play_time < track_time;
   	pcontext->eof = play_time >= track_time;
 	
 	play_time += (((double)(length >> 2) / (double)SampleRate) * 1000.0);
  
-	pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , buf , &pcontext->playing );
+	pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , samplebuf , &pcontext->playing );
 	
 	if(play_time > track_time)
 	{

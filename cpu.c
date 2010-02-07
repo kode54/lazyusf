@@ -517,6 +517,7 @@ void StartEmulationFromSave ( void * savestate ) {
 //        printf("          Audio FIFO Full Flag: %s\t\tCOUNT=COMPARE Int: %s\n", enableFIFOfull?"On":"Off", enablecompare?"On":"Off");
 
     cpu_stopped = 0;
+	cpu_running = 1;
 
 	switch (CPU_Type) {
 		case CPU_Interpreter: StartInterpreterCPU(); break;

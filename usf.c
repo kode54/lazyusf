@@ -39,8 +39,11 @@ uint8_t title_format[] = "%game% - %title%";
 extern int32_t RSP_Cpu;
 
 uint32_t get_length_from_string(uint8_t * str_length) {
-	uint32_t ttime = 0, temp = 0, mult = 1;
-	uint8_t * src = str_length + strlen(str_length) - 1;
+	uint32_t ttime = 0, temp = 0, mult = 1, level = 1;
+	char Source[1024];
+	uint8_t * src = Source + strlen(str_length);	
+	strcpy(&Source[1], str_length);
+	Source[0] = 0;
 
     while(*src) {
 		if((*src >= '0') && (*src <= '9')) {
@@ -52,13 +55,15 @@ uint32_t get_length_from_string(uint8_t * str_length) {
             	ttime = temp;
             	temp = 0;
             } else if(*src  == ':') {
-            	ttime += (temp * 1000);
+            	ttime += (temp * (1000 * level));
             	temp = 0;
+				level *= 60;
             }
 		}
 		src--;
     }
-    ttime += (temp * 60000);
+	
+    ttime += (temp * (1000 * level));
     return ttime;
 }
 
@@ -264,13 +269,11 @@ void usf_play(InputPlayback * context)
     	return 0;
     }
 
- //   context->set_params(context,title,usf_length,-1,SampleRate,2);
-
-    cpu_running = 1;
+ //   context->set_params(context,title,usf_length,-1,SampleRate,2);    
 
     StartEmulationFromSave(savestatespace);
 	Release_Memory();
-	
+		
 	cpu_running = 0;
 }
 
@@ -383,7 +386,22 @@ static Tuple * usf_get_song_tuple(const gchar * fn)
         if(strlen(buffer2))        
 			aud_tuple_associate_string(tuple, FIELD_TITLE, NULL, buffer2);
 		else
-			aud_tuple_associate_string(tuple, FIELD_TITLE, NULL, fn);
+		{
+			char title[512];
+			int pathlength = 0;
+
+			if(strrchr(fn, '/')) //linux
+				pathlength = strrchr(fn, '/') - fn + 1;
+			else if(strrchr(fn, '\\')) //windows
+				pathlength = strrchr(fn, '\\') - fn + 1;
+			else //no path
+				pathlength = 7;
+
+			strcpy(title, &fn[pathlength]);
+				
+			aud_tuple_associate_string(tuple, FIELD_TITLE, NULL, title);
+		
+		}
 			
 		psftag_raw_getvar(tagbuffer, "artist", buffer2, 50000);
         if(strlen(buffer2))        		
@@ -419,7 +437,7 @@ static Tuple * usf_get_song_tuple(const gchar * fn)
 		
 		
 		aud_tuple_associate_int(tuple, FIELD_LENGTH, NULL, (180 * 1000));
-		aud_tuple_associate_string(tuple, FIELD_TITLE, NULL, fn);
+		aud_tuple_associate_string(tuple, FIELD_TITLE, NULL, title);
 	}
 
 	return tuple;
