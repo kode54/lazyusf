@@ -63,11 +63,8 @@ uint8_t * PageROM(uint32_t addr) {
 void *malloc_exec(uint32_t bytes)
 {
 	void *ptr = NULL;
-	//posix_memalign(&ptr, 4096, bytes);
-	ptr = mmap(0,bytes,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, 0, 0);
 
-	//if(mprotect(ptr, bytes ,PROT_READ | PROT_WRITE | PROT_EXEC))
-	//	DisplayError("Cant set executable recompiler code\n");
+	ptr = mmap(0,bytes,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, 0, 0);
 
 	return ptr;
 
@@ -90,14 +87,8 @@ int32_t Allocate_Memory ( void ) {
 	// Allocate the N64MEM and TLB_Map so that they are in each others 4GB range
 	// Also put the registers there :)
 
-	//TLB_Map = (uintptr_t *)malloc((0x100000 * sizeof(uintptr_t)) + 0x815000);
-	//TLB_Map = VirtualAlloc( 0, 0x40000000, MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	MemChunk = malloc((0x100000 * sizeof(uintptr_t)) + 0x815000);
 	TLB_Map = (uintptr_t*)MemChunk;
-	//malloc_exec              2
-	//TLB_Map = VirtualAlloc( 0, 0x1040000, MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	//VirtualAlloc( TLB_Map, (0x100000 * sizeof(uintptr_t)) + 0x830000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	//TLB_Map = VirtualAlloc( 0, (0x100000 * sizeof(uintptr_t)) + 0x820000, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (TLB_Map == NULL) {
 //		Int3();
 		return 0;
@@ -131,15 +122,6 @@ int32_t Allocate_Memory ( void ) {
 
 	memset(JumpTable,0,0x800000*2);
 
-	//VirtualAlloc0x800000000
-
-	/*RecompCode=(uint8_t *)malloc_exec(NormalCompileBufferSize + 4 + 0x20000);
-	if(RecompCode==NULL)
-		return 0;
-
-	RecompCode -= ((uintptr_t)RecompCode % (uintptr_t)0x10000);
-	RecompCode += (uintptr_t)0x10000;*/
-	//RecompCode=(BYTE *) VirtualAlloc(0, (NormalCompileBufferSize) + 4, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	RecompCode = malloc_exec((NormalCompileBufferSize) + 4);
 
 	memset(RecompCode,0xcc,NormalCompileBufferSize);
@@ -151,9 +133,6 @@ int32_t Allocate_Memory ( void ) {
 
 	memset(DelaySlotTable, 0, ((0x1000000) >> 0xA));
 
-	//DMEM = (char *) malloc(0x2000);
-	//if(DMEM == NULL)
-	//	return 0;
 
 	RDRAM = (uint8_t *)(N64MEM);
 	IMEM  = DMEM + 0x1000;
@@ -169,6 +148,29 @@ int32_t Allocate_Memory ( void ) {
 
 	return 1;
 }
+
+
+
+void Release_Memory ( void ) {
+	uint32_t i;
+
+	for (i = 0; i < 0x400; i++) {
+		if (ROMPages[i]) {
+			free(ROMPages[i]); ROMPages[i] = 0;
+		}
+	}
+
+	MemoryState = 0;
+
+	//if (MemChunk != 0) {free( MemChunk); MemChunk=0;}
+
+	if (DelaySlotTable != NULL) {free( DelaySlotTable); DelaySlotTable=NULL;}
+	if (JumpTable != NULL) {free( JumpTable); JumpTable=NULL;}
+	if (RecompCode != NULL){munmap( RecompCode, NormalCompileBufferSize); RecompCode=NULL;}
+	if (RSPRecompCode != NULL){munmap( RSPRecompCode, 0x600000); RSPRecompCode=NULL;} 
+}
+
+
 
 void Compile_LB ( int32_t Reg, uint32_t addr, uint32_t SignExtend ) {
 	uintptr_t Addr = addr;
@@ -1532,26 +1534,6 @@ uint32_t r4300i_SW_VAddr ( uint32_t VAddr, uint32_t Value ) {
 	*(uint32_t *)address = Value;
 	return 1;
 }
-
-void Release_Memory ( void ) {
-	uint32_t i;
-
-	for (i = 0; i < 0x400; i++) {
-		if (ROMPages[i]) {
-			free(ROMPages[i]); ROMPages[i] = 0;
-		}
-	}
-
-	MemoryState = 0;
-
-	if (MemChunk != 0) {free( MemChunk); MemChunk=0;}
-
-	if (DelaySlotTable != NULL) {free( DelaySlotTable); DelaySlotTable=NULL;}
-	if (JumpTable != NULL) {free( JumpTable); JumpTable=NULL;}
-	if (RecompCode != NULL){munmap( RecompCode, NormalCompileBufferSize); RecompCode=NULL;}
-	if (RSPRecompCode != NULL){munmap( RSPRecompCode, 0x600000); RSPRecompCode=NULL;}
-}
-
 
 void ResetRecompCode (void) {
 	uint32_t count;

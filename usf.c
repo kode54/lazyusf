@@ -25,8 +25,9 @@ InputPlayback * pcontext = 0;
 GThread * decode_thread = 0;
 
 int8_t filename[512];
-uint32_t cpu_running = 0, use_interpreter = 0, use_audiohle = 0, is_paused = 0, rel_volume = 256, cpu_stopped = 1;
-uint32_t is_fading = 0, fade_type = 1, fade_time = 5000, play_time = 180000, is_seeking = 0, seek_backwards = 0, seek_time = 0;
+uint32_t cpu_running = 0, use_interpreter = 0, use_audiohle = 0, is_paused = 0, cpu_stopped = 1;
+uint32_t is_fading = 0, fade_type = 1, fade_time = 5000, is_seeking = 0, seek_backwards = 0, track_time = 180000;
+double seek_time = 0.0, play_time = 0.0, rel_volume = 1.0;
 
 uint32_t enablecompare = 0, enableFIFOfull = 0;
 
@@ -36,7 +37,6 @@ int8_t title[100];
 uint8_t title_format[] = "%game% - %title%";
 
 extern int32_t RSP_Cpu;
-extern int32_t ResampleOn, UseResampler;
 
 uint32_t get_length_from_string(uint8_t * str_length) {
 	uint32_t ttime = 0, temp = 0, mult = 1;
@@ -71,7 +71,8 @@ int LoadUSF(const gchar * fn)
 	is_fading = 0;
 	fade_type = 1;
 	fade_time = 5000;
-	play_time = 180000;
+	track_time = 180000;
+	play_time = 0;
 	is_seeking = 0;
 	seek_backwards = 0;
 	seek_time = 0;
@@ -150,7 +151,7 @@ int LoadUSF(const gchar * fn)
 		
 		psftag_raw_getvar(tagbuffer, "length", buffer2, 50000);
         if(strlen(buffer2)) {
-			play_time = get_length_from_string(buffer2);
+			track_time = get_length_from_string(buffer2);
 		}
 		
 		psftag_raw_getvar(tagbuffer, "fade", buffer2, 50000);
@@ -158,13 +159,6 @@ int LoadUSF(const gchar * fn)
 			fade_time = get_length_from_string(buffer2);
 		}
 		
-		
-
-		//format_title(tagbuffer);
-
-        //psftag_raw_getvar(tagbuffer,"length",buffer2,50000);
-        //if(strlen(buffer2))
-        //	usf_length = get_length_from_string(buffer2);
 
 		free(buffer2);
 		buffer2 = NULL;
@@ -216,11 +210,6 @@ int LoadUSF(const gchar * fn)
 
 			aud_vfs_fread(&len, 4, 1, fil);
 		}
-
-		//if(((SaveState*)STATE)->RamSize == 0x400000) {
-		//	savestatespace = realloc(savestatespace, 0x40275c);
-		//}
-
 	}
 
     aud_vfs_fclose(fil);
@@ -236,46 +225,24 @@ void usf_init()
 	RSP_Cpu = 0; // 0 is recompiler, 1 is interpreter
 }
 
-void usf_about()
-{
-  //LoadSettings(&settings);
-}
-
-void usf_configure()
-{
-  //LoadSettings(&settings);
-}
-
 void usf_destroy()
-{
-
-}
-
-void seek(int time_in_ms)
-{
-
-}
-
-void usf_mseek(InputPlayback * data, gulong ms)
 {
 
 }
 
 void usf_seek(InputPlayback * context, gint time)
 {
-
+	is_seeking = 1;
+	seek_time = time * 1000.0;
+	context->output->flush(time);
 }
 
-void usf_file_info_box(gchar * pFile)
-{
 
-}
-
-int usf_get_time(InputPlayback * context)
+void usf_mseek(InputPlayback * context, gulong millisecond)
 {
-	if(!context->output->buffer_playing())
-		return -1;
-	return context->output->written_time();
+	is_seeking = 1;
+	seek_time = (double)millisecond;
+	context->output->flush(millisecond/1000);
 }
 
 void usf_play(InputPlayback * context)
@@ -284,7 +251,6 @@ void usf_play(InputPlayback * context)
 		return;
 	
 	pcontext = context;
-	ResampleOn = 0;
 	decode_thread = g_thread_self();
     context->set_pb_ready(context);
 
@@ -294,7 +260,7 @@ void usf_play(InputPlayback * context)
 	}
 
     if(!LoadUSF(context->filename)) {
-    	Release_Memory();
+		Release_Memory();
     	return 0;
     }
 
@@ -303,15 +269,17 @@ void usf_play(InputPlayback * context)
     cpu_running = 1;
 
     StartEmulationFromSave(savestatespace);
-
+	Release_Memory();
+	
 	cpu_running = 0;
 }
 
 void usf_stop(InputPlayback *context)
 {
-	CloseCpu();
-	Release_Memory();
-	g_thread_join(decode_thread);
+	if(cpu_running)
+		CloseCpu();
+	//Release_Memory();
+	
 	context->output->close_audio();
 }
 
@@ -341,7 +309,6 @@ void usf_pause(InputPlayback *context, gshort paused)
 {
 }
 
-
 const gchar *usf_exts [] =
 {
   "usf",
@@ -349,8 +316,6 @@ const gchar *usf_exts [] =
   NULL
 };
 
-gint get_volume (gint * l, gint * r) { return 0;}
-gint set_volume (gint l, gint r) { return 0;}
 
 static Tuple * usf_get_song_tuple(const gchar * fn) 
 {
@@ -460,40 +425,24 @@ static Tuple * usf_get_song_tuple(const gchar * fn)
 	return tuple;
 }
 
-/*
-
-static Tuple *get_aud_tuple_psf(gchar *fn) {
-    Tuple *tuple = NULL;
-    PSFINFO *tmp = sexypsf_getpsfinfo(fn);
-
-    if (tmp->length) {
-        tuple = aud_tuple_new_from_filename(fn);
-        aud_tuple_associate_int(tuple, FIELD_LENGTH, NULL, tmp->length);
-        aud_tuple_associate_string(tuple, FIELD_ARTIST, NULL, tmp->artist);
-        aud_tuple_associate_string(tuple, FIELD_ALBUM, NULL, tmp->game);
-        aud_tuple_associate_string(tuple, -1, "game", tmp->game);
-        aud_tuple_associate_string(tuple, FIELD_TITLE, NULL, tmp->title);
-        aud_tuple_associate_string(tuple, FIELD_GENRE, NULL, tmp->genre);
-        aud_tuple_associate_string(tuple, FIELD_COPYRIGHT, NULL, tmp->copyright);
-*/
-
+int usf_get_time(InputPlayback * playback)
+{
+	return (int)play_time;
+}
 
 InputPlugin usf_ip = {
   .description = (gchar *)"LazyUSF Decoder",
   .init = usf_init,
-  .about = usf_about,
-  .configure = usf_configure,
   .cleanup = usf_destroy,
   .is_our_file = usf_is_our_file,
   .play_file = usf_play,
   .stop = usf_stop,
   .pause = usf_pause,
   .seek = usf_seek,
-  .get_time = usf_get_time,
-  .vfs_extensions = usf_exts,
   .mseek = usf_mseek,
-  .file_info_box = usf_file_info_box,
+  .vfs_extensions = usf_exts,
   .get_song_tuple = usf_get_song_tuple,
+  .get_time = usf_get_time,
 };
 
 

@@ -25,87 +25,51 @@ int32_t SampleRate = 0, fd = 0, firstWrite = 1, curHeader = 0;
 int32_t bufptr = 0;
 int32_t AudioFirst = 0;
 int32_t first = 1;
-
-static uint32_t ResampleRate = 44100;
-int32_t ResampleOn = 0, UseResampler = 1;
+/*   */
 
 static int32_t samplebuf[65536];
-static int16_t histl[4], histr[4], hp = 0;
 
 void OpenSound(void)
 {
-
-	hp = 0;
-	memset(&histl[0], 0, 8);
-	memset(&histr[0], 0, 8);
-
-	ResampleOn = 0;
-
 	if (pcontext->output->open_audio(FMT_S16_NE,SampleRate,2) == 0) {
-		if (UseResampler) {
-			if(pcontext->output->open_audio(FMT_S16_NE,ResampleRate,2) == 0) {
-			/*couldnt start the outputter*/
-			cpu_running = 0;
-			} else {
-				printf("Using resampler\n");
-				ResampleOn = 1;
-			}
-		}
+		cpu_running = 0;
+		printf("Fail Starting audio\n");
 	} else {
-		printf("SUCCESS! - %d\n", SampleRate);
 	}
 }
-
+extern GThread * decode_thread;
 
 void AddBuffer(unsigned char *buf, unsigned int length) {
 	const int mask = ~((((16 / 8) * 2)) - 1);
 	int32_t i = 0, ia = 0;
 	uint32_t r;
-	pcontext->playing = 1;
-  	pcontext->eof = 0;
-
-	if(ResampleOn) {
-		r = SampleRate * 0x1000;
-		r /= ResampleRate;
-
-
-		for(i = 0; i < ((length >> 2) << 12); ia++, i+=r) {
-			uint32_t l =0, r = 0;
-
-			histr[hp] = (int16_t)(((uint32_t*)buf)[i>>12] >> 16);
-			histl[hp] = ((int32_t*)buf)[i>>12] & 0xffff;
-
-			l = (histl[0] + histl[1]) >> 1;
-			r = (histr[0] + histr[1]) >> 1;
-
-			((int16_t*)&samplebuf[ia])[0] = l;
-			((int16_t*)&samplebuf[ia])[1] = r;
-
-			//hp = (hp+1)&3;
-
-			hp++;
-			if(hp>1) hp = 0;
-
+	
+	if(!cpu_running)
+		return;
+	
+	if(is_seeking) {		
+		play_time += (((double)(length >> 2) / (double)SampleRate) * 1000.0);
+		if(play_time > (double)seek_time) {
+			is_seeking = 0;
 		}
+		return;
 	}
-
-
-  	//if (t > length)
-		//pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
-	//printf("%d\n", pcontext->output->buffer_free () );
-
-	//while ((pcontext->output->buffer_free () < (length))/* && pcontext->playing == TRUE*/)
-  	//	sleep(20000);
-
-
-
-	//while(pcontext->playing && pcontext->output->buffer_playing()) g_usleep(30);
-
-	//pcontext->pass_audio(pcontext,FMT_S16_LE,2 , length , buf , &pcontext->playing );
-	if(ResampleOn)
-		pcontext->pass_audio(pcontext,FMT_S16_NE,2 , ia<<2 , samplebuf , &pcontext->playing );
-	else
-		pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , buf , &pcontext->playing );
+	
+	pcontext->playing = play_time < track_time;
+  	pcontext->eof = play_time >= track_time;
+	
+	play_time += (((double)(length >> 2) / (double)SampleRate) * 1000.0);
+ 
+	pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , buf , &pcontext->playing );
+	
+	if(play_time > track_time)
+	{
+		//pcontext->output->close_audio();
+		//CloseCpu();
+		//exit(0);
+		//g_thread_join(decode_thread);
+		cpu_running = 0;
+	}
 
 }
 
@@ -113,21 +77,7 @@ void AiLenChanged(void) {
 	int32_t length = 0;
 	uint32_t address = (AI_DRAM_ADDR_REG & 0x00FFFFF8);
 
-    /*while(is_paused) {
-		if(_kbhit()) {
-			int key = _getch();
-			kbcallback(key);
-		}
-		Sleep(1);
-	}
-
-	if(_kbhit()) {
-		int key = _getch();
-		kbcallback(key);
-	}*/
-
 	length = AI_LEN_REG & 0x3FFF8;
-
 
 	AddBuffer(RDRAM+address, length);
 

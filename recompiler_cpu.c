@@ -2631,6 +2631,9 @@ void StartRecompilerCPU (void ) {
 
 			CallBlock(Block);
 		}
+		
+		cpu_stopped = 1;
+		//Release_Memory();
 
 }
 

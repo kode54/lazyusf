@@ -111,21 +111,31 @@ void CheckTimer (void) {
 
 void CloseCpu (void) {
 	uint32_t count = 0;
-
+	
 	if (!CPURunning) { return; }
+	
+		//exit(0);
+	
+	cpu_running = 0;
 
 	for (count = 0; count < 3; count ++ ) {
 		CPU_Action->CloseCPU = 1;
 		CPU_Action->DoSomething = 1;
-		UsfSleep(50);
+		UsfSleep(100);
 	}
+		
+	
+	while(!cpu_stopped)
+		usleep(50);
 
 	if(!cpu_stopped) {
-		g_thread_join(decode_thread);
+		// g_thread_join(decode_thread);
 		cpu_stopped = 1;
 	}
 
 	CPURunning = 0;
+	
+	//g_thread_exit(NULL);
 }
 
 int32_t DelaySlotEffectsCompare (uint32_t PC, uint32_t Reg1, uint32_t Reg2) {
