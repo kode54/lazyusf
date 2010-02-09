@@ -29,6 +29,7 @@
 #include "main.h"
 #include "cpu.h"
 #include "x86.h"
+#include "types.h"
 
 uint32_t PROGRAM_COUNTER, * CP0,*FPCR,*RegRDRAM,*RegSP,*RegDPC,*RegMI,*RegVI,*RegAI,*RegPI,
 	*RegRI,*RegSI, HalfLine, RegModValue, ViFieldNumber, LLBit, LLAddr;

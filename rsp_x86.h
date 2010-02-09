@@ -29,6 +29,7 @@
 	x86_ESI = 4, x86_EDI = 5, x86_EBP = 6, x86_ESP = 7
 };*/
 
+#include "types.h"
 
 enum mmxRegValues {
 	x86_MM0 = 1, x86_MM1 = 2, x86_MM2 = 3, x86_MM3 = 4,

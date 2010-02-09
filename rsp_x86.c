@@ -30,6 +30,7 @@
 #include "rsp_x86.h"
 #include "recompiler_cpu.h"
 #include "memory.h"
+#include "types.h"
 
 #define PUTDST8(dest,value)  {(*((uint8_t *)(dest))=(uint8_t)(value)); dest += 1;}
 #define PUTDST16(dest,value) {(*((uint16_t *)(dest))=(uint16_t)(value)); dest += 2;}

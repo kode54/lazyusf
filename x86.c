@@ -27,6 +27,7 @@
 #include "main.h"
 #include "cpu.h"
 #include "x86.h"
+#include "types.h"
 
 uint8_t Index[9] = {0,0,0x40,0,0x80,0,0,0,0xC0};
 

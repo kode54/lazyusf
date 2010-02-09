@@ -26,6 +26,7 @@
 #include "main.h"
 #include "cpu.h"
 #include "x86.h"
+#include "types.h"
 
 uint32_t BranchCompare = 0;
 

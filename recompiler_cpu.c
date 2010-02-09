@@ -28,6 +28,9 @@
 #include "main.h"
 #include "cpu.h"
 #include "x86.h"
+#include "usf.h"
+#include "types.h"
+
 
 void  CreateSectionLinkage (BLOCK_SECTION * Section);
 void  DetermineLoop(BLOCK_SECTION * Section, uint32_t Test, uint32_t Test2, uint32_t TestID);
@@ -2526,7 +2529,7 @@ extern uint8_t *  MemChunk;
 
 void CallBlock(void (*block)(void)) {
 			
-#ifdef USEX64 	
+#ifdef __LP64__ 	
 	// Make sure the Memory block pointer is in register R15
 	__asm__ __volatile__("mov %%rax, %%r15" : : "a"(MemChunk));
 	__asm__ __volatile__("pushq %rbx");

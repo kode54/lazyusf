@@ -28,6 +28,7 @@
 #define REGISTERS_H
 
 #include "recompiler_cpu.h"
+#include "types.h"
 
 #define INDEX_REGISTER			CP0[0]
 #define RANDOM_REGISTER			CP0[1]

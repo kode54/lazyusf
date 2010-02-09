@@ -39,6 +39,7 @@
 #include "x86.h"
 #include "audio.h"
 #include "rsp.h"
+#include "usf.h"
 
 uintptr_t *TLB_Map = 0;
 uint8_t * MemChunk = 0;
@@ -1652,7 +1653,7 @@ static int32_t CONV_REG64(int32_t dest_reg) {
 }
 
 
-#ifdef USEX64
+#ifdef __LP64__
 int r4300i_CPU_MemoryFilter64_2( uintptr_t MemAddress, ucontext_t * context) {
 	uint8_t * ip = context->uc_mcontext.gregs[REG_RIP];
 

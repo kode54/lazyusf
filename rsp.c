@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "audio.h"
 #include "rsp.h"
+#include "types.h"
 
 #include "rsp_recompiler_cpu.h"
 
@@ -733,7 +734,7 @@ int32_t init_rsp(void)
 {
 
 
-	int32_t i = 0;
+	int32_t i = 0, CpuFeatures = 0;
 	runcount++;
 
 	RSP_Running = 0;
@@ -1019,9 +1020,12 @@ int32_t init_rsp(void)
 	memset(RSP_GPR,0,sizeof(RSP_GPR));
 	memset(RSP_Vect,0,sizeof(RSP_Vect));
 
-	Compiler.mmx2 = 0;
-	Compiler.sse = 0;
-	Compiler.mmx = 1;
+	asm volatile("mov $1, %%eax; cpuid" : : "a"(CpuFeatures));
+	
+	
+	Compiler.mmx2 = CpuFeatures & 0x4000000;
+	Compiler.sse = CpuFeatures & 0x2000000;
+	Compiler.mmx = CpuFeatures & 0x800000;
 
 	if(!RSP_Cpu)
 		BuildRecompilerCPU();

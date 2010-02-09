@@ -26,6 +26,11 @@
 #ifndef __Types_h
 #define __Types_h
 
+#ifdef __LP64__
+#define USEX64
+#define EXTREGS
+#endif
+
 #include <stdint.h>
 typedef uint64_t QWORD;
 

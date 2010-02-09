@@ -30,6 +30,8 @@
 #define PUTDST32(dest,value) {(*((uint32_t *)(dest))=(uint32_t)(value)); dest += 4;}
 #define PUTDST64(dest,value) {(*((uint64_t *)(dest))=(uint64_t)(value)); dest += 8;}
 
+#include "types.h"
+
 #ifdef USEX64
 
 #define x64_Reg		0x10

@@ -29,7 +29,7 @@
 #include "rsp_x86.h"
 #include "recompiler_cpu.h"
 #include "memory.h"
-
+#include "types.h"
 
 extern uint8_t * DMEM;
 

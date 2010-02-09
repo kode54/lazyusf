@@ -18,6 +18,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include "types.h"
+
 extern int SampleRate;
 
 extern InputPlugin usf_ip;
@@ -243,8 +245,6 @@ void usf_seek(InputPlayback * context, gint time)
 
 void usf_mseek(InputPlayback * context, gulong millisecond)
 {
-	
-	
 	if(millisecond < play_time) {
 		is_paused = 0;
 				
@@ -262,8 +262,7 @@ void usf_mseek(InputPlayback * context, gulong millisecond)
 		is_seeking = 1;
 		seek_time = (double)millisecond;		
 	}
-			
-	
+				
 	context->output->flush(millisecond/1000);
 }
 
@@ -468,6 +467,9 @@ static Tuple * usf_get_song_tuple(const gchar * fn)
 		aud_tuple_associate_string(tuple, FIELD_QUALITY, NULL, "sequenced");
 
 		aud_tuple_associate_string(tuple, FIELD_CODEC, NULL, "Nintendo 64 Audio");
+		
+		free(tagbuffer);
+		free(buffer2);
 	}
 	else
 	{
@@ -487,6 +489,8 @@ static Tuple * usf_get_song_tuple(const gchar * fn)
 		aud_tuple_associate_int(tuple, FIELD_LENGTH, NULL, (180 * 1000));
 		aud_tuple_associate_string(tuple, FIELD_TITLE, NULL, title);
 	}
+	
+	aud_vfs_fclose(fil);
 
 	return tuple;
 }

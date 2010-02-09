@@ -27,6 +27,7 @@
 #include "main.h"
 #include "cpu.h"
 #include "x86.h"
+#include "types.h"
 
 uint16_t FPU_RoundingMode = 0x0000;//_RC_NEAR
 char Name[50];

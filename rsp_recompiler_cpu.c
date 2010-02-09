@@ -34,6 +34,8 @@
 #include "recompiler_cpu.h"
 #include "memory.h"
 #include "main.h"
+#include "usf.h"
+#include "types.h"
 
 /* #define REORDER_BLOCK_VERBOSE */
 #define LINK_BRANCHES_VERBOSE /* no choice really */
@@ -864,6 +866,9 @@ void CompilerRSPBlock ( void ) {
 		memcpy(IMEM, &RSPCurrentBlock.IMEM[0], 0x1000);
 	}
 }
+
+#include "types.h"
+
 
 void RunRecompilerCPU ( uint32_t Cycles ) {
 	uint8_t * Block = 0;

@@ -26,7 +26,7 @@
 #include "main.h"
 #include "cpu.h"
 #include "x86.h"
-
+#include "types.h"
 
 void fpuAbs(void) {
 	PUTDST16(RecompPos,0xE1D9);
