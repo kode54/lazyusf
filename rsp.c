@@ -991,8 +991,8 @@ int32_t init_rsp(void)
 	memset(RSP_GPR,0,sizeof(RSP_GPR));
 	memset(RSP_Vect,0,sizeof(RSP_Vect));
 
-	Compiler.mmx2 = 1;
-	Compiler.sse = 1;
+	Compiler.mmx2 = 0;
+	Compiler.sse = 0;
 	Compiler.mmx = 1;
 
 	if(!RSP_Cpu)
