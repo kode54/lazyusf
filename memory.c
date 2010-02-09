@@ -142,9 +142,11 @@ int32_t Allocate_Memory ( void ) {
 	}
 	//savestatespace = malloc(0x80275c);
 	savestatespace = malloc(0x900000);
-	memset(savestatespace,0,0x900000);
+	memset(savestatespace, 0, 0x900000);
 	//ROM   = NULL;
 	MemoryState = 1;
+	
+
 
 	return 1;
 }
@@ -162,12 +164,18 @@ void Release_Memory ( void ) {
 
 	MemoryState = 0;
 
+	memset(MemChunk, 0, (0x100000 * sizeof(uintptr_t)) + 0x815000);
 	if (MemChunk != 0) {free( MemChunk); MemChunk=0;}
 
 	if (DelaySlotTable != NULL) {free( DelaySlotTable); DelaySlotTable=NULL;}
 	if (JumpTable != NULL) {free( JumpTable); JumpTable=NULL;}
 	if (RecompCode != NULL){munmap( RecompCode, NormalCompileBufferSize); RecompCode=NULL;}
 	if (RSPRecompCode != NULL){munmap( RSPRecompCode, 0x600000); RSPRecompCode=NULL;} 
+	
+	if(savestatespace)
+		free(savestatespace);
+	savestatespace = NULL;
+		
 }
 
 

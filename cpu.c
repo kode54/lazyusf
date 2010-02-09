@@ -109,14 +109,17 @@ void CheckTimer (void) {
 	}
 }
 
+extern uint8_t MemChunk;
+
 void CloseCpu (void) {
 	uint32_t count = 0;
 	
-	if (!CPURunning) { return; }
+	if(!MemChunk) return;
+	if (!cpu_running) { return; }
 	
 		//exit(0);
 	
-	//cpu_running = 0;
+	cpu_running = 0;
 
 	for (count = 0; count < 3; count ++ ) {
 		CPU_Action->CloseCPU = 1;
@@ -125,13 +128,16 @@ void CloseCpu (void) {
 	}
 		
 	
-	while(!cpu_stopped)
+	for(count = 0; !cpu_stopped && (count < 10); count++)
 		usleep(50);
 
 	if(!cpu_stopped) {
 		// g_thread_join(decode_thread);
 		//cpu_stopped = 1;
-	}
+		printf("force quitting\n");
+		g_thread_exit(NULL);
+	} else
+	
 
 	CPURunning = 0;
 	
@@ -492,9 +498,6 @@ void StartEmulationFromSave ( void * savestate ) {
 	init_rsp();
 
 	Machine_LoadStateFromRAM(savestate);
-
-	free(savestate);
-	savestate = 0;
 
 	SampleRate = 48681812 / (AI_DACRATE_REG + 1);
 

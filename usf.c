@@ -256,6 +256,7 @@ void usf_play(InputPlayback * context)
 		return;
 	
 	// Defaults (which would be overriden by Tags / playing
+	savestatespace = NULL;
 	cpu_running = is_paused = 0;
 	cpu_stopped = 1;
 	is_fading = 0;
@@ -286,16 +287,20 @@ void usf_play(InputPlayback * context)
  //   context->set_params(context,title,usf_length,-1,SampleRate,2);    
 
     StartEmulationFromSave(savestatespace);
-	Release_Memory();
-		
-	cpu_running = 0;
+	
+	printf("Releasing memories 1\n");
+	//cpu_running = 0;
+	//Release_Memory();		
 }
 
 void usf_stop(InputPlayback *context)
 {
-	printf("called usf stop\n");
-	if(cpu_running)
+	if(!cpu_running)
+		return;
+	printf("called usf stop\n");	
 		CloseCpu();
+	
+	printf("Releasing memories 2\n");
 	Release_Memory();
 	
 	context->output->close_audio();
