@@ -2522,30 +2522,41 @@ void MarkCodeBlock (uint32_t PAddr) {
 	}
 }
 
+extern uint8_t *  MemChunk;
+
 void CallBlock(void (*block)(void)) {
-			__asm__ __volatile__("pushq %rbx");
-			__asm__ __volatile__("pushq %rcx");
-			__asm__ __volatile__("pushq %rdx");
-			__asm__ __volatile__("pushq %r9");
-			__asm__ __volatile__("pushq %r10");
-			__asm__ __volatile__("pushq %r11");
-			__asm__ __volatile__("pushq %r12");
-			__asm__ __volatile__("pushq %r13");
-			__asm__ __volatile__("pushq %r14");
-			__asm__ __volatile__("pushq %r15");
+			
+#ifdef USEX64 	
+	// Make sure the Memory block pointer is in register R15
+	__asm__ __volatile__("mov %%rax, %%r15" : : "a"(MemChunk));
+	__asm__ __volatile__("pushq %rbx");
+	__asm__ __volatile__("pushq %rcx");
+	__asm__ __volatile__("pushq %rdx");
+	__asm__ __volatile__("pushq %r9");
+	__asm__ __volatile__("pushq %r10");
+	__asm__ __volatile__("pushq %r11");
+	__asm__ __volatile__("pushq %r12");
+	__asm__ __volatile__("pushq %r13");
+	__asm__ __volatile__("pushq %r14");
+	__asm__ __volatile__("pushq %r15");
 
-			block();
+	block();
 
-			__asm__ __volatile__("popq %r15");
-			__asm__ __volatile__("popq %r14");
-			__asm__ __volatile__("popq %r13");
-			__asm__ __volatile__("popq %r12");
-			__asm__ __volatile__("popq %r11");
-			__asm__ __volatile__("popq %r10");
-			__asm__ __volatile__("popq %r9");
-			__asm__ __volatile__("popq %rdx");
-			__asm__ __volatile__("popq %rcx");
-			__asm__ __volatile__("popq %rbx");
+	__asm__ __volatile__("popq %r15");
+	__asm__ __volatile__("popq %r14");
+	__asm__ __volatile__("popq %r13");
+	__asm__ __volatile__("popq %r12");
+	__asm__ __volatile__("popq %r11");
+	__asm__ __volatile__("popq %r10");
+	__asm__ __volatile__("popq %r9");
+	__asm__ __volatile__("popq %rdx");
+	__asm__ __volatile__("popq %rcx");
+	__asm__ __volatile__("popq %rbx");
+#else
+	__asm__ __volatile__("pushad");
+	block();
+	__asm__ __volatile__("popad");
+
 }
 //#include <windows.h>
 //int r4300i_CPU_MemoryFilter64( DWORD dwExptCode, LPEXCEPTION_POINTERS lpEP);
@@ -2633,7 +2644,6 @@ void StartRecompilerCPU (void ) {
 		}
 		
 		cpu_stopped = 1;
-		//Release_Memory();
 
 }
 
