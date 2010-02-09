@@ -34,6 +34,7 @@ void OpenSound(void)
 	if (pcontext->output->open_audio(FMT_S16_NE,SampleRate,2) == 0) {
 		cpu_running = 0;
 		printf("Fail Starting audio\n");
+		g_thread_exit(NULL);
 	} else {
 	}
 }
