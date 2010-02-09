@@ -255,6 +255,20 @@ void usf_play(InputPlayback * context)
 	if(!context->filename)
 		return;
 	
+	// Defaults (which would be overriden by Tags / playing
+	cpu_running = is_paused = 0;
+	cpu_stopped = 1;
+	is_fading = 0;
+	fade_type = 1;
+	fade_time = 5000;
+	is_seeking = 0;
+	seek_backwards = 0;
+	track_time = 180000;
+	seek_time = 0.0;
+	play_time = 0.0;
+	rel_volume = 1.0;
+
+	
 	pcontext = context;
 	decode_thread = g_thread_self();
     context->set_pb_ready(context);
@@ -279,9 +293,10 @@ void usf_play(InputPlayback * context)
 
 void usf_stop(InputPlayback *context)
 {
+	printf("called usf stop\n");
 	if(cpu_running)
 		CloseCpu();
-	//Release_Memory();
+	Release_Memory();
 	
 	context->output->close_audio();
 }

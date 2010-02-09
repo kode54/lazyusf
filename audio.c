@@ -73,7 +73,7 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 		//pcontext->output->close_audio();
 		//CloseCpu();
 		//exit(0);
-		//g_thread_join(decode_thread);
+		//g_thread_join(decode_thread);		
 		cpu_running = 0;
 	}
 

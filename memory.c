@@ -162,7 +162,7 @@ void Release_Memory ( void ) {
 
 	MemoryState = 0;
 
-	//if (MemChunk != 0) {free( MemChunk); MemChunk=0;}
+	if (MemChunk != 0) {free( MemChunk); MemChunk=0;}
 
 	if (DelaySlotTable != NULL) {free( DelaySlotTable); DelaySlotTable=NULL;}
 	if (JumpTable != NULL) {free( JumpTable); JumpTable=NULL;}

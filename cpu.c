@@ -116,7 +116,7 @@ void CloseCpu (void) {
 	
 		//exit(0);
 	
-	cpu_running = 0;
+	//cpu_running = 0;
 
 	for (count = 0; count < 3; count ++ ) {
 		CPU_Action->CloseCPU = 1;
@@ -130,7 +130,7 @@ void CloseCpu (void) {
 
 	if(!cpu_stopped) {
 		// g_thread_join(decode_thread);
-		cpu_stopped = 1;
+		//cpu_stopped = 1;
 	}
 
 	CPURunning = 0;
@@ -467,7 +467,7 @@ void StartEmulationFromSave ( void * savestate ) {
 	if(use_interpreter)
 		CPU_Type = CPU_Interpreter;
 
-	CloseCpu();
+	//CloseCpu();
 
 	memset(CPU_Action,0,sizeof(CPU_Action));
 	WrittenToRom = 0;
@@ -515,7 +515,7 @@ void StartEmulationFromSave ( void * savestate ) {
 //        printf("starting from %08x\n", PROGRAM_COUNTER);
 //        printf("Settings: CPU Recompiler: %s\tRSP Recompiler: %s\tAudio HLE: %s\n", (CPU_Type==CPU_Recompiler)?"On":"Off",RSP_Cpu?"Off":"On",use_audiohle?"On":"Off");
 //        printf("          Audio FIFO Full Flag: %s\t\tCOUNT=COMPARE Int: %s\n", enableFIFOfull?"On":"Off", enablecompare?"On":"Off");
-
+	
     cpu_stopped = 0;
 	cpu_running = 1;
 
