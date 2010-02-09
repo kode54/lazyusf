@@ -43,7 +43,7 @@
 uintptr_t *TLB_Map = 0;
 uint8_t * MemChunk = 0;
 uint32_t RdramSize = 0x800000, SystemRdramSize = 0x800000, RomFileSize = 0x4000000;
-uint8_t * N64MEM = 0, * RDRAM = 0, * DMEM = 0, * IMEM = 0, * ROMPages[0x400], * savestatespace = 0;
+uint8_t * N64MEM = 0, * RDRAM = 0, * DMEM = 0, * IMEM = 0, * ROMPages[0x400], * savestatespace = 0, * NOMEM = 0;
 void ** JumpTable = 0, ** DelaySlotTable = 0;
 uint8_t * RecompCode = 0, * RecompPos = 0;
 
@@ -58,7 +58,7 @@ uint8_t * PageROM(uint32_t addr) {
 	return (ROMPages[addr/0x10000])?ROMPages[addr/0x10000]+(addr%0x10000):&EmptySpace;
 }
 
-#if 1
+
 #define PAGE_SIZE	4096
 void *malloc_exec(uint32_t bytes)
 {
@@ -69,15 +69,6 @@ void *malloc_exec(uint32_t bytes)
 	return ptr;
 
 }
-#else
-#define PAGE_SIZE	4096
-void *malloc_exec(uint32_t bytes)
-{
-	return malloc(bytes);
-}
-
-#endif
-
 
 
 int32_t Allocate_Memory ( void ) {
@@ -87,24 +78,31 @@ int32_t Allocate_Memory ( void ) {
 	// Allocate the N64MEM and TLB_Map so that they are in each others 4GB range
 	// Also put the registers there :)
 
-	MemChunk = malloc((0x100000 * sizeof(uintptr_t)) + 0x815000);
+
+	// the mmap technique works craptacular when the regions don't overlay
+
+	MemChunk = mmap(NULL, 0x100000 * sizeof(uintptr_t) + 0x81D000, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+
 	TLB_Map = (uintptr_t*)MemChunk;
 	if (TLB_Map == NULL) {
-//		Int3();
 		return 0;
 	}
 
-	memset(TLB_Map,0,0x100000 * sizeof(uintptr_t));
+	memset(TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
 
-	N64MEM = (uint8_t *) ((uintptr_t)TLB_Map + (0x100000 * sizeof(uintptr_t)));
-	if(N64MEM==NULL) {
+	N64MEM = mmap((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t) + 0x10000, 0x80D000, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+	if(N64MEM == NULL) {
 		DisplayError("Failed to allocate N64MEM");
 		return 0;
 	}
 
-	memset(N64MEM,0,0x80D000);
+	//N64MEM = mmap((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t) + 0x10000, 0x800000, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
 
-	Registers = (N64_REGISTERS *)((uintptr_t)N64MEM + 0x80D000);
+	memset(N64MEM,0,0x800000);
+
+	NOMEM = mmap((uintptr_t)N64MEM + 0x800000, 0xD000, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+
+	Registers = (N64_REGISTERS *)((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t));
 	TLBLoadAddress = (uint32_t *)((uintptr_t)Registers + 0x500);
 	Timers = (SYSTEM_TIMERS*)(TLBLoadAddress + 4);
 	WaitMode = (uint32_t *)(Timers + sizeof(SYSTEM_TIMERS));
@@ -114,19 +112,18 @@ int32_t Allocate_Memory ( void ) {
 	RSP_ACCUM = (REGISTER *)(DMEM + 0x2000);
 	RSP_Vect = (VECTOR *)((char*)RSP_ACCUM + (sizeof(REGISTER)*32));
 
-	JumpTable = (void **)malloc(0x800000*2);
-	//(BYTE *) JumpTable = (BYTE *) VirtualAlloc( 0, 0x800000*2, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	//(void **)malloc(0x800000);
+
+	JumpTable = (void **)malloc(0x200000 * sizeof(uintptr_t));
+
 	if( JumpTable == NULL )
 		return 0;
 
-	memset(JumpTable,0,0x800000*2);
+	memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
 
 	RecompCode = malloc_exec((NormalCompileBufferSize) + 4);
 
-	memset(RecompCode,0xcc,NormalCompileBufferSize);
+	memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
 
-    //(void **)DelaySlotTable =   (void **) VirtualAlloc( 0, ((0x800000) >> 0xA)*2, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	DelaySlotTable = (void **) malloc((0x1000000) >> 0xA);
 	if( DelaySlotTable == NULL )
 		return 0;
@@ -140,12 +137,11 @@ int32_t Allocate_Memory ( void ) {
 	for (i = 0; i < 0x400; i++) {
 		ROMPages[i] = 0;
 	}
-	//savestatespace = malloc(0x80275c);
+
 	savestatespace = malloc(0x900000);
 	memset(savestatespace, 0, 0x900000);
-	//ROM   = NULL;
 	MemoryState = 1;
-	
+
 
 
 	return 1;
@@ -164,18 +160,20 @@ void Release_Memory ( void ) {
 
 	MemoryState = 0;
 
-	memset(MemChunk, 0, (0x100000 * sizeof(uintptr_t)) + 0x815000);
-	if (MemChunk != 0) {free( MemChunk); MemChunk=0;}
+	//memset(MemChunk, 0, (0x100000 * sizeof(uintptr_t)) + 0x815000);
+	if (MemChunk != 0) {munmap(MemChunk, 0x100000 * sizeof(uintptr_t)) + 0x81D000; MemChunk=0;}
+	if (N64MEM != 0) {munmap(N64MEM, 0x800000); N64MEM=0;}
+	if (NOMEM != 0) {munmap(NOMEM, 0xD000); NOMEM=0;}
 
 	if (DelaySlotTable != NULL) {free( DelaySlotTable); DelaySlotTable=NULL;}
 	if (JumpTable != NULL) {free( JumpTable); JumpTable=NULL;}
 	if (RecompCode != NULL){munmap( RecompCode, NormalCompileBufferSize); RecompCode=NULL;}
-	if (RSPRecompCode != NULL){munmap( RSPRecompCode, 0x600000); RSPRecompCode=NULL;} 
-	
+	if (RSPRecompCode != NULL){munmap( RSPRecompCode, 0x600000); RSPRecompCode=NULL;}
+
 	if(savestatespace)
 		free(savestatespace);
 	savestatespace = NULL;
-		
+
 }
 
 
@@ -1613,7 +1611,7 @@ void sig_handler(int signo, siginfo_t * info, ucontext_t * context)
 		   A Hack to fix some crappy GCC thing when R15 gets overwritten.
 		   R15 should _never_ be overwritten. >:(
 		*/
-#ifdef USEX64		
+#ifdef USEX64
 		if(context->uc_mcontext.gregs[REG_R15] != (uintptr_t)TLB_Map) {
 			context->uc_mcontext.gregs[REG_R15] = (uintptr_t)TLB_Map;
 			return;

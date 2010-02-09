@@ -109,39 +109,22 @@ void CheckTimer (void) {
 	}
 }
 
-extern uint8_t MemChunk;
+
 
 void CloseCpu (void) {
 	uint32_t count = 0;
-	
+
 	if(!MemChunk) return;
 	if (!cpu_running) { return; }
-	
-		//exit(0);
-	
+
 	cpu_running = 0;
 
 	for (count = 0; count < 3; count ++ ) {
 		CPU_Action->CloseCPU = 1;
 		CPU_Action->DoSomething = 1;
-		UsfSleep(100);
 	}
-		
-	
-	for(count = 0; !cpu_stopped && (count < 10); count++)
-		usleep(50);
-
-	if(!cpu_stopped) {
-		// g_thread_join(decode_thread);
-		//cpu_stopped = 1;
-		printf("force quitting\n");
-		g_thread_exit(NULL);
-	} else
-	
 
 	CPURunning = 0;
-	
-	//g_thread_exit(NULL);
 }
 
 int32_t DelaySlotEffectsCompare (uint32_t PC, uint32_t Reg1, uint32_t Reg2) {
@@ -357,7 +340,10 @@ int32_t DelaySlotEffectsJump (uint32_t JumpPC) {
 
 void DoSomething ( void ) {
 	if (CPU_Action->CloseCPU) {
-		StopEmulation();
+		//StopEmulation();
+		printf("Stopping?\n");
+
+		g_thread_exit(NULL);
 	}
 	if (CPU_Action->CheckInterrupts) {
 		CPU_Action->CheckInterrupts = 0;
@@ -514,11 +500,6 @@ void StartEmulationFromSave ( void * savestate ) {
 		AI_STATUS_REG|=0x40000000;
 	}
 
-
-//        printf("starting from %08x\n", PROGRAM_COUNTER);
-//        printf("Settings: CPU Recompiler: %s\tRSP Recompiler: %s\tAudio HLE: %s\n", (CPU_Type==CPU_Recompiler)?"On":"Off",RSP_Cpu?"Off":"On",use_audiohle?"On":"Off");
-//        printf("          Audio FIFO Full Flag: %s\t\tCOUNT=COMPARE Int: %s\n", enableFIFOfull?"On":"Off", enablecompare?"On":"Off");
-	
     cpu_stopped = 0;
 	cpu_running = 1;
 
