@@ -2529,7 +2529,7 @@ extern uint8_t *  MemChunk;
 
 void CallBlock(void (*block)(void)) {
 			
-#ifdef __LP64__ 	
+#ifdef USEX64 	
 	// Make sure the Memory block pointer is in register R15
 	__asm__ __volatile__("mov %%rax, %%r15" : : "a"(MemChunk));
 	__asm__ __volatile__("pushq %rbx");

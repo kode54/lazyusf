@@ -1020,7 +1020,11 @@ int32_t init_rsp(void)
 	memset(RSP_GPR,0,sizeof(RSP_GPR));
 	memset(RSP_Vect,0,sizeof(RSP_Vect));
 
-	asm volatile("mov $1, %%eax; cpuid" : : "a"(CpuFeatures));
+#ifndef USEX64
+	asm volatile("push %%ebx; mov $1, %%eax; cpuid; pop %%ebx" : : "a"(CpuFeatures) : "edx","ecx");
+#else
+	asm volatile("push %%rbx; mov $1, %%eax; cpuid; pop %%rbx" : : "a"(CpuFeatures) : "rdx","rcx");
+#endif
 	
 	
 	Compiler.mmx2 = CpuFeatures & 0x4000000;

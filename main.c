@@ -18,7 +18,7 @@ int InitalizeApplication ( void )
 void StopEmulation(void)
 {
 	//asm("int $3");
-	printf("Arrivederci!\n\n");
+	//printf("Arrivederci!\n\n");
 	//Release_Memory();
 	//exit(0);
 	cpu_running = 0;
