@@ -341,9 +341,10 @@ int32_t DelaySlotEffectsJump (uint32_t JumpPC) {
 void DoSomething ( void ) {
 	if (CPU_Action->CloseCPU) {
 		//StopEmulation();
+		cpu_running = 0;
 		printf("Stopping?\n");
-
-		g_thread_exit(NULL);
+		if(!(fake_seek_stopping&3))
+			g_thread_exit(NULL);
 	}
 	if (CPU_Action->CheckInterrupts) {
 		CPU_Action->CheckInterrupts = 0;
@@ -374,7 +375,7 @@ void InPermLoop (void) {
 
 	/* check RSP running */
 	/* check RDP running */
-	if (Timers->Timer > 0) {
+	if (Timers->Timer >= 0) {
 		COUNT_REGISTER += Timers->Timer + 1;
 		Timers->Timer = -1;
 	}
@@ -458,8 +459,18 @@ void StartEmulationFromSave ( void * savestate ) {
 	uint32_t count = 0;
 	if(use_interpreter)
 		CPU_Type = CPU_Interpreter;
+	
+	printf("Starting generic Cpu\n");
 
 	//CloseCpu();
+	memset(N64MEM, 0, 0x800000);	
+	memset(DMEM, 0, 0x1000);
+	memset(IMEM, 0, 0x1000);
+	memset(TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
+	memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
+	memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
+	memset(DelaySlotTable, 0, ((0x1000000) >> 0xA));
+	memset((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t), 0, 0x10000);
 
 	memset(CPU_Action,0,sizeof(CPU_Action));
 	WrittenToRom = 0;
@@ -502,6 +513,7 @@ void StartEmulationFromSave ( void * savestate ) {
 
     cpu_stopped = 0;
 	cpu_running = 1;
+	fake_seek_stopping = 0;
 
 	switch (CPU_Type) {
 		case CPU_Interpreter: StartInterpreterCPU(); break;
@@ -541,7 +553,7 @@ void RunRsp (void) {
 				break;
 			case 2: {
 
-					if(use_audiohle) {
+					if(use_audiohle && !is_seeking) {
 						OSTask_t *task = (OSTask_t*)(DMEM + 0xFC0);
 						if(audio_ucode(task))
 							break;
@@ -564,7 +576,13 @@ void RunRsp (void) {
 				break;
 			}
 
-			real_run_rsp(100);
+			if(!is_seeking)
+				real_run_rsp(100);
+			SP_STATUS_REG |= (0x0203 );
+			if ((SP_STATUS_REG & SP_STATUS_INTR_BREAK) != 0 ) {
+				MI_INTR_REG |= 1;
+				CheckInterrupts();
+			}
 
 		}
 	}

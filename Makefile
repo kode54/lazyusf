@@ -42,8 +42,6 @@ rsp_recompiler_cpu.o: rsp_recompiler_cpu.c
 
 
 clean:
-	rm -f $(OBJS) recompiler_cpu.o lazyusf.so > /dev/null
+	rm -f $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o lazyusf.so > /dev/null
 
 
-
-all: usf

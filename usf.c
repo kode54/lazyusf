@@ -25,7 +25,7 @@ InputPlayback * pcontext = 0;
 GThread * decode_thread = 0;
 
 int8_t filename[512];
-uint32_t cpu_running = 0, use_interpreter = 0, use_audiohle = 0, is_paused = 0, cpu_stopped = 1;
+uint32_t cpu_running = 0, use_interpreter = 0, use_audiohle = 0, is_paused = 0, cpu_stopped = 1, fake_seek_stopping = 0;
 uint32_t is_fading = 0, fade_type = 1, fade_time = 5000, is_seeking = 0, seek_backwards = 0, track_time = 180000;
 double seek_time = 0.0, play_time = 0.0, rel_volume = 1.0;
 
@@ -237,16 +237,33 @@ void usf_destroy()
 
 void usf_seek(InputPlayback * context, gint time)
 {
-	is_seeking = 1;
-	seek_time = time * 1000.0;
-	context->output->flush(time);
+	usf_mseek(time * 1000);
 }
 
 
 void usf_mseek(InputPlayback * context, gulong millisecond)
 {
-	is_seeking = 1;
-	seek_time = (double)millisecond;
+	
+	
+	if(millisecond < play_time) {
+		is_paused = 0;
+				
+		fake_seek_stopping = 1;
+		CloseCpu();
+					
+		while(!cpu_stopped)
+			usleep(1);
+		
+		is_seeking = 1;
+		seek_time = (double)millisecond;
+		
+		fake_seek_stopping = 2;	
+	} else {
+		is_seeking = 1;
+		seek_time = (double)millisecond;		
+	}
+			
+	
 	context->output->flush(millisecond/1000);
 }
 
@@ -257,7 +274,7 @@ void usf_play(InputPlayback * context)
 
 	// Defaults (which would be overriden by Tags / playing
 	savestatespace = NULL;
-	cpu_running = is_paused = 0;
+	cpu_running = is_paused = fake_seek_stopping = 0;
 	cpu_stopped = 1;
 	is_fading = 0;
 	fade_type = 1;
@@ -283,13 +300,21 @@ void usf_play(InputPlayback * context)
 		Release_Memory();
     	return 0;
     }
+ 
+    while(1) {		
+		is_fading = 0;
+		play_time = 0;
 
- //   context->set_params(context,title,usf_length,-1,SampleRate,2);
+		StartEmulationFromSave(savestatespace);		
+		if(!fake_seek_stopping) break;
+		while(fake_seek_stopping != 2)
+			usleep(1);
+		fake_seek_stopping = 4;
+		context->output->close_audio();
+	}
+	
+	Release_Memory();
 
-    StartEmulationFromSave(savestatespace);
-
-
-	//Release_Memory();
 }
 
 void usf_stop(InputPlayback *context)

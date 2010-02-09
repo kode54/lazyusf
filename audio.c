@@ -38,7 +38,6 @@ void OpenSound(void)
 	} else {
 	}
 }
-extern GThread * decode_thread;
 
 void AddBuffer(unsigned char *buf, unsigned int length) {
 	const int mask = ~((((16 / 8) * 2)) - 1);
@@ -71,10 +70,6 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 	
 	if(play_time > track_time)
 	{
-		//pcontext->output->close_audio();
-		//CloseCpu();
-		//exit(0);
-		//g_thread_join(decode_thread);		
 		cpu_running = 0;
 	}
 

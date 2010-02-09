@@ -120,7 +120,7 @@ int32_t Allocate_Memory ( void ) {
 
 	memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
 
-	RecompCode = malloc_exec((NormalCompileBufferSize) + 4);
+	RecompCode = malloc_exec(NormalCompileBufferSize);
 
 	memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
 
@@ -160,7 +160,6 @@ void Release_Memory ( void ) {
 
 	MemoryState = 0;
 
-	//memset(MemChunk, 0, (0x100000 * sizeof(uintptr_t)) + 0x815000);
 	if (MemChunk != 0) {munmap(MemChunk, 0x100000 * sizeof(uintptr_t)) + 0x81D000; MemChunk=0;}
 	if (N64MEM != 0) {munmap(N64MEM, 0x800000); N64MEM=0;}
 	if (NOMEM != 0) {munmap(NOMEM, 0xD000); NOMEM=0;}
@@ -168,7 +167,11 @@ void Release_Memory ( void ) {
 	if (DelaySlotTable != NULL) {free( DelaySlotTable); DelaySlotTable=NULL;}
 	if (JumpTable != NULL) {free( JumpTable); JumpTable=NULL;}
 	if (RecompCode != NULL){munmap( RecompCode, NormalCompileBufferSize); RecompCode=NULL;}
-	if (RSPRecompCode != NULL){munmap( RSPRecompCode, 0x600000); RSPRecompCode=NULL;}
+	if (RSPRecompCode != NULL){munmap( RSPRecompCode, RSP_RECOMPMEM_SIZE + RSP_SECRECOMPMEM_SIZE); RSPRecompCode=NULL;}
+	
+	if (RSPJumpTables != NULL) {free( RSPJumpTables); RSPJumpTables=NULL;}
+	if (JumpTable != NULL) {free( JumpTable); JumpTable=NULL;}
+	
 
 	if(savestatespace)
 		free(savestatespace);

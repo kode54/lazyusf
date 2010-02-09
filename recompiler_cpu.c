@@ -2569,7 +2569,7 @@ void StartRecompilerCPU (void ) {
 	uintptr_t Addr, tt;
 	void (*Block)(void) = 0;
 
-	//printf("Starting recompiler cpu %d\n", cpu_running);
+	printf("Starting recompiler cpu %d\n", cpu_running);
 
 	InitExceptionHandler();
 
@@ -2645,7 +2645,7 @@ void StartRecompilerCPU (void ) {
 		}
 		
 		cpu_stopped = 1;
-
+	printf("Cpu stopped\n");
 }
 
 

@@ -31,9 +31,34 @@ uint32_t RSP_NextInstruction, RSP_JumpTo;
 uint32_t RSP_Running = 0;
 int32_t RSP_Cpu = 0;
 
-#define RSP_RECOMPMEM_SIZE		0x400000
-#define RSP_SECRECOMPMEM_SIZE	0x200000
+
 void RSPSetJumpTable (void);
+
+void RSPReInitMemory()
+{
+	
+	if(RSPRecompCode == NULL) {
+		printf("enough memory for RSP RSPRecompCode!");
+		return 0;
+	}
+
+	RSPRecompCodeSecondary = RSPRecompCode + RSP_RECOMPMEM_SIZE;
+
+
+	if( RSPJumpTables == NULL ) {
+		DisplayError("Not enough memory for Jump Table!");
+		return 0;
+	}
+
+	memset((uint8_t*)RSPJumpTables, 0, 0x2000 * MaxMaps);
+	memset((uint8_t*)RSPRecompCode, 0, 0x00400000);
+	memset((uint8_t*)RSPRecompCodeSecondary, 0, 0x00200000);
+	
+
+	RSPJumpTable = (void **)RSPJumpTables;
+	RSPRecompPos = RSPRecompCode;
+	NoOfMaps = 0;
+}
 
 int32_t RSPAllocateMemory (void) {
 
@@ -717,8 +742,7 @@ int32_t init_rsp(void)
 	NoOfMaps = 0;
 	Table = 0;
 	ConditionalMove = 0;
-	RSPRecompCode = 0;
-	RSPRecompCodeSecondary = 0;
+
 
 	RSP_NextInstruction = 0;
 	RSP_JumpTo = 0;
@@ -986,7 +1010,11 @@ int32_t init_rsp(void)
 	Compiler.bAccum = 1;
 	Compiler.bGPRConstants = 1;
 
-	RSPAllocateMemory();
+	if(!fake_seek_stopping) {
+		RSPAllocateMemory();
+	} else {
+		RSPReInitMemory();
+	}
 
 	memset(RSP_GPR,0,sizeof(RSP_GPR));
 	memset(RSP_Vect,0,sizeof(RSP_Vect));
