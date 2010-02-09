@@ -14,7 +14,7 @@ ROPTS = -g
 all: lazyusf.so
 
 install: all
-	cp lazyusf.so /usr/local/lib/audacious/Input
+	cp lazyusf.so /usr/lib/audacious/Input
 
 lazyusf.so : $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o
 	$(LD) -g $(LDFLAGS) $^
