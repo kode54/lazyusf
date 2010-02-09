@@ -295,6 +295,8 @@ void usf_play(InputPlayback * context)
 void usf_stop(InputPlayback *context)
 {
 
+	is_paused = 0;
+	
 	if(!cpu_running)
 		return;
 
@@ -330,6 +332,7 @@ gboolean usf_is_our_file(char *pFile)
 
 void usf_pause(InputPlayback *context, gshort paused)
 {
+	is_paused = paused;//is_paused?0:1;
 }
 
 const gchar *usf_exts [] =
