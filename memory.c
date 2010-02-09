@@ -1605,11 +1605,12 @@ void sig_handler(int signo, siginfo_t * info, ucontext_t * context)
 		   A Hack to fix some crappy GCC thing when R15 gets overwritten.
 		   R15 should _never_ be overwritten. >:(
 		*/
+#ifdef USEX64		
 		if(context->uc_mcontext.gregs[REG_R15] != (uintptr_t)TLB_Map) {
 			context->uc_mcontext.gregs[REG_R15] = (uintptr_t)TLB_Map;
 			return;
 		}
-
+#endif
 		i = r4300i_CPU_MemoryFilter64_2(MemAddress,context);
 		if(i==0)
 			return;
@@ -1641,6 +1642,8 @@ static int32_t CONV_REG64(int32_t dest_reg) {
 	}
 }
 
+
+#ifdef USEX64
 int r4300i_CPU_MemoryFilter64_2( uintptr_t MemAddress, ucontext_t * context) {
 	uint8_t * ip = context->uc_mcontext.gregs[REG_RIP];
 
@@ -1741,130 +1744,6 @@ int r4300i_CPU_MemoryFilter64_2( uintptr_t MemAddress, ucontext_t * context) {
 	return 1;
 }
 
-
-
-#if 0
-extern int gmap[64];
-#include <windows.h>
-#ifdef USEX64
-int r4300i_CPU_MemoryFilter64( DWORD dwExptCode, LPEXCEPTION_POINTERS lpEP) {
-	uintptr_t MemAddress = ((char *)lpEP->ExceptionRecord->ExceptionInformation[1] - (uintptr_t)N64MEM);
-	uint8_t *ip = (uint8_t *)lpEP->ContextRecord->Rip;
-
-	if(lpEP->ExceptionRecord->ExceptionInformation[1] == 0) {
-		return EXCEPTION_CONTINUE_SEARCH;
-	}
-
-	if (dwExptCode != EXCEPTION_ACCESS_VIOLATION) {
-		return EXCEPTION_CONTINUE_SEARCH;
-	}
-
-	//if(MemAddress == 0x410000C)
-		//Int3();
-	//8002F240
-//		00000002102ACA10
-		//41 C7 44 35 00 0F 00 00 00 mov         dword ptr [r13+rsi],0Fh
-		//0000000210126180 41 8B B7 0C 00 90 04 mov         esi,dword ptr [r15+490000Ch]
-	if((*ip & 0x40) && (*(ip+1) == 0xf) && (*(ip+2) == 0xb7)) {
-		uint8_t dest_reg = (*(ip+3) % 0x40) / 8;
-		int32_t half = 0;
-		if(*ip & 4) dest_reg += 8;
-		r4300i_LH_NonMemory(MemAddress, &half, 1);
-
-		((uint64_t*)(&lpEP->ContextRecord->Rax))[dest_reg] = (int32_t)half;
-
-		lpEP->ContextRecord->Rip+=4;
-
-		if((*(ip+3) & 0x7)==4)
-			lpEP->ContextRecord->Rip++;
-
-		if((*(ip+3) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Rip+=4;
-		else if((*(ip+3) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Rip+=1;
-
-		return EXCEPTION_CONTINUE_EXECUTION;
-
-	} else if((*ip & 0x40) && (*(ip+1) ==0x89)) { // MOV [Rxx + Rxx], Exx
-		uint8_t dest_reg = (*(ip+2) % 0x40) / 8;
-		uint64_t dest = 0;
-
-		if(*ip & 4) dest_reg += 8;
-
-		dest = ((uint64_t*)(&lpEP->ContextRecord->Rax))[dest_reg];
-
-		r4300i_SW_NonMemory(MemAddress, dest);
-
-		if((*(ip+2) & 0x7)==4)
-			lpEP->ContextRecord->Rip+=4;
-		else
-			lpEP->ContextRecord->Rip+=3;
-
-		if((*(ip+2) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Rip+=4;
-		else if((*(ip+2) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Rip+=1;
-
-		return EXCEPTION_CONTINUE_EXECUTION;
-
-	} else if((*ip & 0x40) && (*(ip+1) ==0xC7)) { // MOV [Rxx + Rxx], Imm32
-		uint32_t imm32 = *(uint32_t*)(ip+4);
-		r4300i_SW_NonMemory(MemAddress, imm32);
-		lpEP->ContextRecord->Rip+=7;
-
-
-		// 40 C7 04 07 0F 00 00 00
-
-		//if(*(ip+2)&0x4)
-		if((*(ip+2) & 0x7)==4)
-			lpEP->ContextRecord->Rip++;
-		if((*(ip+2) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Rip+=4;
-		else if((*(ip+2) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Rip+=1;
-
-		return EXCEPTION_CONTINUE_EXECUTION;
-	} else if ((*ip & 0x40) && (*(ip + 1) == 0x8B )) {
-		uint8_t dest_reg = (*(ip+2) % 0x40) / 8;
-		uint32_t word = 0;
-		uint64_t *dest = 0;
-
-		//41 8B BF 30 D0 00 01
-
-
-		if(*ip & 4) dest_reg += 8;
-
-		dest = &((uint64_t*)(&lpEP->ContextRecord->Rax))[dest_reg];
-		r4300i_LW_NonMemory(MemAddress, &word);
-		*dest = word;
-		*dest &= 0x00000000ffffffff;
-		//*dest = 0;
-		//if(*(ip+2) & 0x4)
-		if((*(ip+2) & 0x7)==4)
-			lpEP->ContextRecord->Rip+=4;
-		else
-			lpEP->ContextRecord->Rip+=3;
-
-		if((*(ip+2) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Rip+=4;
-		else if((*(ip+2) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Rip+=1;
-
-
-		return EXCEPTION_CONTINUE_EXECUTION;
-
-	}
-
-//	Int3();
-	// 00000002107A46AA 40 8B 04 39      mov         eax,dword ptr [rcx+rdi]
-return EXCEPTION_CONTINUE_EXECUTION;
-	return EXCEPTION_CONTINUE_SEARCH;
-
-}
-
-
-
-
 #else
 
 static int32_t CONV_REG(int32_t dest_reg) {
@@ -1876,123 +1755,108 @@ static int32_t CONV_REG(int32_t dest_reg) {
 		case 6: return 1; break;
 		case 7: return 0; break;
 		default:
-			_asm int 3;
+			 asm volatile("int $3");
 			 break;
 	}
 }
 
-int r4300i_CPU_MemoryFilter64( DWORD dwExptCode, LPEXCEPTION_POINTERS lpEP) {
-	uintptr_t MemAddress = ((char *)lpEP->ExceptionRecord->ExceptionInformation[1] - (uintptr_t)N64MEM);
-	uint8_t *ip = (uint8_t *)lpEP->ContextRecord->Eip;
+int r4300i_CPU_MemoryFilter64_2( uintptr_t MemAddress, ucontext_t * context) {
+	uint8_t * ip = context->uc_mcontext.gregs[REG_EIP];
 
-
-	if(lpEP->ExceptionRecord->ExceptionInformation[1] == 0) {
-		return EXCEPTION_CONTINUE_SEARCH;
+	if(MemAddress == 0) {
+		return 1;
 	}
 
-	if (dwExptCode != EXCEPTION_ACCESS_VIOLATION) {
-		return EXCEPTION_CONTINUE_SEARCH;
-	}
-
-	//if(MemAddress == 0x410000C)
-		//Int3();
-	//8002F240
-//		00000002102ACA10
-		//41 C7 44 35 00 0F 00 00 00 mov         dword ptr [r13+rsi],0Fh
-		//0000000210126180 41 8B B7 0C 00 90 04 mov         esi,dword ptr [r15+490000Ch]
 	if((*(ip) == 0xf) && (*(ip+1) == 0xb7)) {
 		uint8_t dest_reg = (*(ip+2) % 0x40) / 8;
 		int32_t half = 0;
 		r4300i_LH_NonMemory(MemAddress, &half, 1);
 
-		((uint32_t*)(&lpEP->ContextRecord->Edi))[CONV_REG(dest_reg)] = (int32_t)half;
+		//((uint32_t*)(&lpEP->ContextRecord->Edi))[CONV_REG(dest_reg)] = (int32_t)half;
+		context->uc_mcontext.gregs[CONV_REG64(dest_reg)] = (int32_t)half;
 
-		lpEP->ContextRecord->Eip+=3;
+		context->uc_mcontext.gregs[REG_EIP]+=3;
 
 		if((*(ip+2) & 0x7)==4)
-			lpEP->ContextRecord->Eip++;
+			context->uc_mcontext.gregs[REG_EIP]++;
 		else if((*(ip+1) & 0x7)==5)
-			lpEP->ContextRecord->Eip+=4;
+			context->uc_mcontext.gregs[REG_EIP]+=4;
 
 
 		if((*(ip+2) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Eip+=4;
+			context->uc_mcontext.gregs[REG_EIP]+=4;
 		else if((*(ip+2) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Eip+=1;
+			context->uc_mcontext.gregs[REG_EIP]+=1;
 
-		return EXCEPTION_CONTINUE_EXECUTION;
+		return 0;
 
 	} else if((*(ip) ==0x89)) { // MOV [Rxx + Rxx], Exx
 		uint8_t dest_reg = (*(ip+1) % 0x40) / 8;
 		uint32_t dest = 0;
 
-		dest = ((uint32_t*)(&lpEP->ContextRecord->Edi))[CONV_REG(dest_reg)];
+		dest = context->uc_mcontext.gregs[CONV_REG64(dest_reg)];
 
 		r4300i_SW_NonMemory(MemAddress, dest);
 
 		if((*(ip+1) & 0x7)==4)
-			lpEP->ContextRecord->Eip+=3;
+			context->uc_mcontext.gregs[REG_EIP]+=3;
 		else
-			lpEP->ContextRecord->Eip+=2;
+			context->uc_mcontext.gregs[REG_EIP]+=2;
 
 		if((*(ip+1) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Eip+=4;
+			context->uc_mcontext.gregs[REG_EIP]+=4;
 		else if((*(ip+1) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Eip+=1;
+			context->uc_mcontext.gregs[REG_EIP]+=1;
 
-		return EXCEPTION_CONTINUE_EXECUTION;
+		return 0;
 
 	} else if((*(ip) ==0xC7)) { // MOV [Rxx + Rxx], Imm32
 		uint32_t imm32 = *(uint32_t*)(ip+2);
 		r4300i_SW_NonMemory(MemAddress, imm32);
-		lpEP->ContextRecord->Eip+=6;
+		context->uc_mcontext.gregs[REG_EIP]+=6;
 
 
 		// 40 C7 04 07 0F 00 00 00
 
 		//if(*(ip+2)&0x4)
 		if((*(ip+1) & 0x7)==4)
-			lpEP->ContextRecord->Eip++;
+			context->uc_mcontext.gregs[REG_EIP]++;
 		if((*(ip+1) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Eip+=4;
+			context->uc_mcontext.gregs[REG_EIP]+=4;
 		else if((*(ip+1) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Eip+=1;
+			context->uc_mcontext.gregs[REG_EIP]+=1;
 
-		return EXCEPTION_CONTINUE_EXECUTION;
+		return 0;
 	} else if (*ip == 0x8B ) {
 		uint8_t dest_reg = CONV_REG((*(ip+1) % 0x40) / 8);
 		uint32_t word = 0;
 		uint32_t *dest = 0;
 
-		dest = &((uint32_t*)(&lpEP->ContextRecord->Edi))[dest_reg];
+		dest = context->uc_mcontext.gregs[CONV_REG64(dest_reg)];
 		r4300i_LW_NonMemory(MemAddress, &word);
 		*dest = word;
 		//*dest = 0;
 		//if(*(ip+2) & 0x4)
 		if((*(ip+1) & 0x7)==4)
-			lpEP->ContextRecord->Eip+=3;
+			context->uc_mcontext.gregs[REG_EIP]+=3;
 		else if((*(ip+1) & 0x7)==5)
-			lpEP->ContextRecord->Eip+=6;
+			context->uc_mcontext.gregs[REG_EIP]+=6;
 		else
-			lpEP->ContextRecord->Eip+=2;
+			context->uc_mcontext.gregs[REG_EIP]+=2;
 
 		if((*(ip+1) & 0xC0) == 0x80)
-			lpEP->ContextRecord->Eip+=4;
+			context->uc_mcontext.gregs[REG_EIP]+=4;
 		else if((*(ip+1) & 0xC0) == 0x40)
-			lpEP->ContextRecord->Eip+=1;
+			context->uc_mcontext.gregs[REG_EIP]+=1;
 
 
-		return EXCEPTION_CONTINUE_EXECUTION;
+		return 0;
 
 	}
 
-	// 00000002107A46AA 40 8B 04 39      mov         eax,dword ptr [rcx+rdi]
-return EXCEPTION_CONTINUE_EXECUTION;
-	return EXCEPTION_CONTINUE_SEARCH;
+	return 1;
 
 }
 
-
-#endif
 
 #endif

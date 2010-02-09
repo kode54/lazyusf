@@ -2553,9 +2553,10 @@ void CallBlock(void (*block)(void)) {
 	__asm__ __volatile__("popq %rcx");
 	__asm__ __volatile__("popq %rbx");
 #else
-	__asm__ __volatile__("pushad");
+	__asm__ __volatile__("pusha");
 	block();
-	__asm__ __volatile__("popad");
+	__asm__ __volatile__("popa");
+#endif
 
 }
 //#include <windows.h>

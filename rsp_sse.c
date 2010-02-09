@@ -39,19 +39,19 @@ extern uint8_t * DMEM;
 #define PUTDST64(dest,value) {(*((uint64_t *)(dest))=(uint64_t)(value)); dest += 8;}
 
 void RSPSseMoveAlignedVariableToReg(void * Variable, int32_t sseReg) {
-    OPCODE_REG_VARIABLE(,16,0x280F,sseReg,Variable);
+    OPCODE_REG_VARIABLE(,16,0x100F,sseReg,Variable);
 }
 
 void RSPSseMoveAlignedN64MemToReg(int32_t sseReg, int32_t AddrReg) {
-    OPCODE_REG_ADDR_DMEM(,16,0x280F,sseReg,AddrReg);
+    OPCODE_REG_ADDR_DMEM(,16,0x100F,sseReg,AddrReg);
 }
 
 void RSPSseMoveAlignedRegToVariable(int32_t sseReg, void *Variable) {
-    OPCODE_REG_VARIABLE(,16,0x290F,sseReg,Variable);
+    OPCODE_REG_VARIABLE(,16,0x110f,sseReg,Variable); //290F
 }
 
 void RSPSseMoveAlignedRegToN64Mem(int32_t sseReg, int32_t AddrReg) {
-	OPCODE_REG_ADDR_DMEM(,16,0x290f,sseReg,AddrReg);
+	OPCODE_REG_ADDR_DMEM(,16,0x110f,sseReg,AddrReg); //290F
 }
 
 void RSPSseMoveUnalignedVariableToReg(void *Variable, int32_t sseReg) {

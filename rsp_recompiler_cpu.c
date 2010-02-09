@@ -904,6 +904,7 @@ void RunRecompilerCPU ( uint32_t Cycles ) {
 
 			void (*block)();
 			block=Block;
+#ifdef USEX64			
 			__asm__ __volatile__("pushq %rax");
 			__asm__ __volatile__("pushq %rbx");
 			__asm__ __volatile__("pushq %rcx");
@@ -934,21 +935,11 @@ void RunRecompilerCPU ( uint32_t Cycles ) {
 			__asm__ __volatile__("popq %rbx");
 			__asm__ __volatile__("popq %rax");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#else
+			__asm__ __volatile__("pusha");
+			block();
+			__asm__ __volatile__("popa");
+#endif
 		}
 
 	}
