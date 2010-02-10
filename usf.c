@@ -166,6 +166,23 @@ int LoadUSF(const gchar * fn)
 			fade_time = get_length_from_string(buffer2);
 		}
 
+		psftag_raw_getvar(tagbuffer, "title", buffer2, 50000);
+        if(strlen(buffer2))
+			strcpy(title, buffer2);
+		else
+		{
+			int pathlength = 0;
+
+			if(strrchr(fn, '/')) //linux
+				pathlength = strrchr(fn, '/') - fn + 1;
+			else if(strrchr(fn, '\\')) //windows
+				pathlength = strrchr(fn, '\\') - fn + 1;
+			else //no path
+				pathlength = 7;
+
+			strcpy(title, &fn[pathlength]);			
+
+		}
 
 		free(buffer2);
 		buffer2 = NULL;
@@ -288,7 +305,8 @@ void usf_play(InputPlayback * context)
 
 	pcontext = context;
 	decode_thread = g_thread_self();
-    context->set_pb_ready(context);
+    	
+	context->set_pb_ready(context);
 
     if(!Allocate_Memory()) {
 		printf("Failed whilst allocating memory :*(\n");
@@ -299,7 +317,7 @@ void usf_play(InputPlayback * context)
 		Release_Memory();
     	return 0;
     }
- 
+		
     while(1) {		
 		is_fading = 0;
 		play_time = 0;
@@ -367,7 +385,7 @@ const gchar *usf_exts [] =
 };
 
 
-static Tuple * usf_get_song_tuple(const gchar * fn)
+Tuple * usf_get_song_tuple(const gchar * fn)
 {
 	Tuple *	tuple = NULL;
 
@@ -464,9 +482,11 @@ static Tuple * usf_get_song_tuple(const gchar * fn)
         if(strlen(buffer2))
 			aud_tuple_associate_string(tuple, FIELD_COPYRIGHT, NULL, buffer2);
 
-		aud_tuple_associate_string(tuple, FIELD_QUALITY, NULL, "sequenced");
+		// This for unknown reasons turns the "Kbps" in the UI to "channels"
+		//aud_tuple_associate_string(tuple, FIELD_QUALITY, NULL, "sequenced");
 
 		aud_tuple_associate_string(tuple, FIELD_CODEC, NULL, "Nintendo 64 Audio");
+		aud_tuple_associate_string(tuple, -1, "console", "Nintendo 64");
 		
 		free(tagbuffer);
 		free(buffer2);
@@ -503,8 +523,8 @@ int usf_get_time(InputPlayback * playback)
 InputPlugin usf_ip = {
   .description = (gchar *)"LazyUSF Decoder",
   .init = usf_init,
-  .cleanup = usf_destroy,
-  .is_our_file = usf_is_our_file,
+ // .cleanup = usf_destroy,
+ // .is_our_file = usf_is_our_file,
   .play_file = usf_play,
   .stop = usf_stop,
   .pause = usf_pause,

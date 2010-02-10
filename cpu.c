@@ -499,6 +499,8 @@ void StartEmulationFromSave ( void * savestate ) {
 	SampleRate = 48681812 / (AI_DACRATE_REG + 1);
 
 	OpenSound();
+	
+	pcontext->set_params(pcontext, NULL, 0, SampleRate * 4, SampleRate, 2);	
 
 	if(enableFIFOfull) {
 		const float VSyncTiming = 789000.0f;
@@ -613,107 +615,6 @@ void TimerDone (void) {
 	CheckTimer();
 }
 
-#ifdef USEX64
-/*void RecompileTimerDone(void) {
-	uint8_t * Jump, * Jump2, *Jump3 = 0, * ExitJump1 = 0, * ExitJump2 = 0;
-	//Int3();
-	//BreakPoint();
-	Pushad();
-	Push(x86_EAX);
-
-	CompConstToVariable(CompareTimer, &Timers->CurrentTimerType);
-	JneLabel8(0);
-	Jump = RecompPos - 1;
-
-	if(enablecompare) {
-		OrConstToVariable(CAUSE_IP7, &FAKE_CAUSE_REGISTER);
-	}
-
-	Call_Direct(ChangeCompareTimer);
-
-
-	JmpLabel32(0);
-	ExitJump1 = RecompPos - 4;
-
-    // ****************************************************************************
-    SetJump8(Jump, RecompPos);
-    CompConstToVariable(ViTimer, &Timers->CurrentTimerType);
-	JneLabel8(0);
-	Jump = RecompPos - 1;
-
-	Call_Direct(RefreshScreen);
-
-	OrConstToVariable(MI_INTR_VI, &MI_INTR_REG);
-
-	Call_Direct(CheckInterrupts);
-
-
-	MoveConstToVariable(0, WaitMode);
-
-
-    JmpLabel32(0);
-	ExitJump2 = RecompPos - 4;
-
-    // ****************************************************************************
-    SetJump8(Jump, RecompPos);
-    CompConstToVariable(AiTimer, &Timers->CurrentTimerType);
-	JneLabel8(0);
-	Jump = RecompPos - 1;
-
-	Push(x86_RCX);
-	Push(x86_RDX);
-	XorX86RegToX86Reg(x86_EDX, x86_EDX);
-	MoveConstToX86reg(AiTimer, x86_ECX);
-	Call_Direct(ChangeTimer);
-	MoveConstToVariable(0, &AI_STATUS_REG);
-	OrConstToVariable(4, &AudioIntrReg);
-	Pop(x86_RCX);
-	Pop(x86_RDX);
-
-	// ****************************************************************************
-
-	SetJump8(Jump, RecompPos);
-	SetJump32(ExitJump1, RecompPos);
-	SetJump32(ExitJump2, RecompPos);
-
-	Call_Direct(CheckTimer);
-
-	Pop(x86_EAX);
-	Popad();
-	//MoveVariableToX86reg(&Timers->CurrentTimerType, x86_R8);
-	//CompConstToX86reg(x86_R8, CompareTimer);
-}
-
-void RecompileDoSomething(void) {
-	uint8_t * Jump;
-
-	CompConstToVariable(0, &CPU_Action->DoInterrupt);
-	JeLabel8(0);
-	Jump = RecompPos - 1;
-
-
-    MoveConstToVariable(0, &CPU_Action->DoInterrupt);
-	Push(x86_RCX);
-	XorX86RegToX86Reg(x86_RCX, x86_RCX);
-	CompileDoIntrException();
-	Pop(x86_RCX);
-
-	SetJump8(Jump, RecompPos);
-
-    MoveConstToVariable(0, &CPU_Action->DoSomething);
-
-    CompConstToVariable(0, &CPU_Action->DoInterrupt);
-    JeLabel8(0);
-	Jump = RecompPos - 1;
-
-    MoveConstToVariable(1, &CPU_Action->DoSomething);
-
-	SetJump8(Jump, RecompPos);
-
-}
-*/
-#else
-
 void Int3() {
 	asm("int $3");
 }
@@ -723,7 +624,6 @@ void _Emms() {
 }
 
 
-#endif
 
 #include <fpu_control.h>
 

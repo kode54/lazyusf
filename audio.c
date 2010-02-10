@@ -31,7 +31,7 @@ static int16_t samplebuf[65536];
 
 void OpenSound(void)
 {
-	if (pcontext->output->open_audio(FMT_S16_NE,SampleRate,2) == 0) {
+	if (pcontext->output->open_audio(FMT_S16_NE, SampleRate, 2) == 0) {
 		cpu_running = 0;
 		printf("Fail Starting audio\n");
 		g_thread_exit(NULL);
@@ -65,8 +65,8 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
   	pcontext->eof = play_time >= track_time;
 	
 	play_time += (((double)(length >> 2) / (double)SampleRate) * 1000.0);
- 
-	pcontext->pass_audio(pcontext,FMT_S16_NE,2 , length , samplebuf , &pcontext->playing );
+ 	
+	pcontext->output->write_audio (samplebuf, length);
 	
 	if(play_time > track_time)
 	{
@@ -81,8 +81,8 @@ void AiLenChanged(void) {
 
 	length = AI_LEN_REG & 0x3FFF8;
 
-	while(is_paused)
-		usleep(10000);
+	while(is_paused && !is_seeking)
+		g_usleep(10000);
 		
 	
 	AddBuffer(RDRAM+address, length);
