@@ -20,14 +20,8 @@
 #include <stdlib.h>
 
 extern InputPlayback * pcontext;
-
-int32_t SampleRate = 0, fd = 0, firstWrite = 1, curHeader = 0;
-int32_t bufptr = 0;
-int32_t AudioFirst = 0;
-int32_t first = 1;
-/*   */
-
-static int16_t samplebuf[65536];
+int32_t SampleRate = 0;
+static int16_t samplebuf[16384];
 
 void OpenSound(void)
 {
@@ -40,9 +34,8 @@ void OpenSound(void)
 }
 
 void AddBuffer(unsigned char *buf, unsigned int length) {
-	const int mask = ~((((16 / 8) * 2)) - 1);
-	int32_t i = 0, ia = 0, out = 0;
-	uint32_t r;
+	int32_t i = 0, out = 0;
+	double vol = 1.0;	
 	
 	if(!cpu_running)
 		return;
@@ -55,20 +48,24 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 		return;
 	}
 	
+	if(play_time > track_time) {
+		vol =  1.0f - (((double)play_time - (double)track_time) / (double)fade_time);
+	} 
+			
 	for(out = i = 0; i < (length >> 1); i+=2)
 	{
-		samplebuf[out++] = ((int16_t*)buf)[i+1];
-		samplebuf[out++] = ((int16_t*)buf)[i];
+		samplebuf[out++] = (int16_t)(vol * (double)((int16_t*)buf)[i+1]);
+		samplebuf[out++] = (int16_t)(vol * (double)((int16_t*)buf)[i]);
 	}
 	
-	pcontext->playing = play_time < track_time;
-  	pcontext->eof = play_time >= track_time;
+	pcontext->playing = play_time < (track_time + fade_time);
+  	pcontext->eof = play_time >= (track_time + fade_time);
 	
 	play_time += (((double)(length >> 2) / (double)SampleRate) * 1000.0);
  	
 	pcontext->output->write_audio (samplebuf, length);
 	
-	if(play_time > track_time)
+	if(play_time > (track_time + fade_time))
 	{
 		cpu_running = 0;
 	}
