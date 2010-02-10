@@ -44,6 +44,7 @@ extern uint32_t WrittenToRom, MemoryState;
 int  Allocate_ROM                ( void );
 int  Allocate_Memory             ( void );
 void Release_Memory              ( void );
+int PreAllocate_Memory(void);
 
 void *malloc_exec(uint32_t bytes);
 void *jmalloc(uint32_t bytes);

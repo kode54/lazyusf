@@ -342,7 +342,7 @@ void DoSomething ( void ) {
 	if (CPU_Action->CloseCPU) {
 		//StopEmulation();
 		cpu_running = 0;
-		printf("Stopping?\n");
+		//printf("Stopping?\n");
 		if(!(fake_seek_stopping&3))
 			g_thread_exit(NULL);
 	}
@@ -412,7 +412,7 @@ uint32_t Machine_LoadStateFromRAM(void * savestatespace) {
 	//fix rdram size
 	if (SaveRDRAMSize != RdramSize) {
 		// dothis :)
-	}
+	}		
 
 	RdramSize = SaveRDRAMSize;
 
@@ -460,17 +460,19 @@ void StartEmulationFromSave ( void * savestate ) {
 	if(use_interpreter)
 		CPU_Type = CPU_Interpreter;
 	
-	printf("Starting generic Cpu\n");
+	//printf("Starting generic Cpu\n");
 
 	//CloseCpu();
-	memset(N64MEM, 0, 0x800000);	
+	memset(N64MEM, 0, RdramSize);	
+	
 	memset(DMEM, 0, 0x1000);
 	memset(IMEM, 0, 0x1000);
 	memset(TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
-	memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
-	memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
-	memset(DelaySlotTable, 0, ((0x1000000) >> 0xA));
-	memset((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t), 0, 0x10000);
+	if(!use_interpreter) {
+		memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
+		memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
+		memset(DelaySlotTable, 0, ((0x1000000) >> 0xA));
+	}
 
 	memset(CPU_Action,0,sizeof(CPU_Action));
 	WrittenToRom = 0;

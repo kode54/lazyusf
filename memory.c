@@ -74,7 +74,7 @@ void *malloc_exec(uint32_t bytes)
 
 int32_t Allocate_Memory ( void ) {
 	uint32_t i = 0;
-	RdramSize = 0x400000;
+	//RdramSize = 0x800000;
 
 	// Allocate the N64MEM and TLB_Map so that they are in each others 4GB range
 	// Also put the registers there :)
@@ -82,7 +82,7 @@ int32_t Allocate_Memory ( void ) {
 
 	// the mmap technique works craptacular when the regions don't overlay
 
-	MemChunk = mmap(NULL, 0x100000 * sizeof(uintptr_t) + 0x81D000, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+	MemChunk = mmap(NULL, 0x100000 * sizeof(uintptr_t) + 0x1D000 + RdramSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
 	TLB_Map = (uintptr_t*)MemChunk;
 	if (TLB_Map == NULL) {
@@ -91,17 +91,20 @@ int32_t Allocate_Memory ( void ) {
 
 	memset(TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
 
-	N64MEM = mmap((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t) + 0x10000, 0x80D000, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+	N64MEM = mmap((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t) + 0x10000, 0xD000 + RdramSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
 	if(N64MEM == NULL) {
 		DisplayError("Failed to allocate N64MEM");
 		return 0;
 	}
+	
+	memset(N64MEM, 0, RdramSize);
 
-	//N64MEM = mmap((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t) + 0x10000, 0x800000, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
-
-	memset(N64MEM,0,0x800000);
-
-	NOMEM = mmap((uintptr_t)N64MEM + 0x800000, 0xD000, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+	NOMEM = mmap((uintptr_t)N64MEM + RdramSize, 0xD000, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+	
+	if(RdramSize == 0x400000)
+	{
+	//	munmap(N64MEM + 0x400000, 0x400000);
+	}
 
 	Registers = (N64_REGISTERS *)((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t));
 	TLBLoadAddress = (uint32_t *)((uintptr_t)Registers + 0x500);
@@ -114,41 +117,54 @@ int32_t Allocate_Memory ( void ) {
 	RSP_Vect = (VECTOR *)((char*)RSP_ACCUM + (sizeof(REGISTER)*32));
 
 
-	JumpTable = (void **)malloc(0x200000 * sizeof(uintptr_t));
+	if(!use_interpreter) {
+		JumpTable = (void **)malloc(0x200000 * sizeof(uintptr_t));
 
-	if( JumpTable == NULL )
-		return 0;
+		if( JumpTable == NULL )
+			return 0;
 
-	memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
+		memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
 
-	RecompCode = malloc_exec(NormalCompileBufferSize);
+		RecompCode = malloc_exec(NormalCompileBufferSize);
 
-	memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
+		memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
 
-	DelaySlotTable = (void **) malloc((0x1000000) >> 0xA);
-	if( DelaySlotTable == NULL )
-		return 0;
+		DelaySlotTable = (void **) malloc((0x1000000) >> 0xA);
+		if( DelaySlotTable == NULL )
+			return 0;
 
-	memset(DelaySlotTable, 0, ((0x1000000) >> 0xA));
+		memset(DelaySlotTable, 0, ((0x1000000) >> 0xA));
 
-
+	} else {
+		JumpTable = NULL;
+		RecompCode = NULL;
+		DelaySlotTable = NULL;
+	}
 	RDRAM = (uint8_t *)(N64MEM);
 	IMEM  = DMEM + 0x1000;
 
-	for (i = 0; i < 0x400; i++) {
-		ROMPages[i] = 0;
-	}
-
-	savestatespace = malloc(0x900000);
-	memset(savestatespace, 0, 0x900000);
 	MemoryState = 1;
-
-
 
 	return 1;
 }
 
+int PreAllocate_Memory(void) {
+	int i = 0;
+	
+	// Moved the savestate allocation here :)  (for better management later)
+	savestatespace = malloc(0x80275C);
+	
+	if(savestatespace == 0)
+		return 0;
+	
+	memset(savestatespace, 0, 0x80275C);
+	
+	for (i = 0; i < 0x400; i++) {
+		ROMPages[i] = 0;
+	}
 
+	return 1;
+}
 
 void Release_Memory ( void ) {
 	uint32_t i;
@@ -158,11 +174,12 @@ void Release_Memory ( void ) {
 			free(ROMPages[i]); ROMPages[i] = 0;
 		}
 	}
+	printf("Freeing memory\n");
 
 	MemoryState = 0;
 
-	if (MemChunk != 0) {munmap(MemChunk, 0x100000 * sizeof(uintptr_t)) + 0x81D000; MemChunk=0;}
-	if (N64MEM != 0) {munmap(N64MEM, 0x800000); N64MEM=0;}
+	if (MemChunk != 0) {munmap(MemChunk, 0x100000 * sizeof(uintptr_t)) + 0x1D000 + RdramSize; MemChunk=0;}
+	if (N64MEM != 0) {munmap(N64MEM, RdramSize); N64MEM=0;}
 	if (NOMEM != 0) {munmap(NOMEM, 0xD000); NOMEM=0;}
 
 	if (DelaySlotTable != NULL) {free( DelaySlotTable); DelaySlotTable=NULL;}

@@ -72,7 +72,8 @@ uint32_t get_length_from_string(uint8_t * str_length) {
 int LoadUSF(const gchar * fn)
 {
 	VFSFile * fil = NULL;
-	uint32_t reservedsize = 0, codesize = 0, crc = 0, tagstart = 0, reservestart = 0, filesize = 0, tagsize = 0, temp = 0;
+	uint32_t reservedsize = 0, codesize = 0, crc = 0, tagstart = 0, reservestart = 0;
+	uint32_t i, filesize = 0, tagsize = 0, temp = 0;
 	uint8_t buffer[16], * buffer2 = NULL, * tagbuffer = NULL;
 
 	is_fading = 0;
@@ -194,7 +195,7 @@ int LoadUSF(const gchar * fn)
 
 	aud_vfs_fseek(fil, reservestart, SEEK_SET);
 	aud_vfs_fread(&temp, 4, 1, fil);
-
+		
 	if(temp == 0x34365253) { //there is a rom section
 		int len = 0, start = 0;
 		aud_vfs_fread(&len, 4, 1, fil);
@@ -222,6 +223,8 @@ int LoadUSF(const gchar * fn)
 
 	}
 
+	
+
 	aud_vfs_fread(&temp, 4, 1, fil);
 	if(temp == 0x34365253) {
 		int len = 0, start = 0;
@@ -236,7 +239,15 @@ int LoadUSF(const gchar * fn)
 		}
 	}
 
-    aud_vfs_fclose(fil);
+    // Detect the Ramsize before the memory allocation 
+	
+	if(*(uint32_t*)(savestatespace + 4) == 0x400000) {
+		RdramSize = 0x400000;
+		savestatespace = realloc(savestatespace, 0x40275c);
+	} else if(*(uint32_t*)(savestatespace + 4) == 0x800000)
+		RdramSize = 0x800000;
+	
+	aud_vfs_fclose(fil);
 
 	return 1;
 }
@@ -285,6 +296,7 @@ void usf_mseek(InputPlayback * context, gulong millisecond)
 
 void usf_play(InputPlayback * context)
 {
+	uint32_t i = 0;
 	if(!context->filename)
 		return;
 
@@ -308,16 +320,17 @@ void usf_play(InputPlayback * context)
     	
 	context->set_pb_ready(context);
 
-    if(!Allocate_Memory()) {
-		printf("Failed whilst allocating memory :*(\n");
-		return 0;
-	}
+    // Allocate main memory after usf loads  (to determine ram size)
+	
+	PreAllocate_Memory();
 
     if(!LoadUSF(context->filename)) {
 		Release_Memory();
     	return 0;
     }
-		
+	
+	Allocate_Memory();
+	
     while(1) {		
 		is_fading = 0;
 		play_time = 0;
@@ -348,6 +361,7 @@ void usf_stop(InputPlayback *context)
 	Release_Memory();
 
 	context->output->close_audio();
+	
 }
 
 gboolean usf_is_our_file(char *pFile)
