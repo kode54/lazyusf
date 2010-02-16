@@ -78,7 +78,7 @@ void AiLenChanged(void) {
 
 	length = AI_LEN_REG & 0x3FFF8;
 
-	while(is_paused && !is_seeking)
+	while(is_paused && !is_seeking && cpu_running)
 		g_usleep(10000);
 		
 	
