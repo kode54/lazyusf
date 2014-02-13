@@ -366,8 +366,8 @@ void RSP_Cop0_MF (void) {
 	case 10: RSP_GPR[RSPOpC.rt].UW = DPC_CURRENT_REG; break;
 	case 11: RSP_GPR[RSPOpC.rt].W = DPC_STATUS_REG; break;
 	case 12: RSP_GPR[RSPOpC.rt].W = DPC_CLOCK_REG; break;
-	default:
-		printf("have not implemented RSP MF cpu->CP0 reg (%d)",RSPOpC.rd);
+	//default:
+		//printf("have not implemented RSP MF cpu->CP0 reg (%d)",RSPOpC.rd);
 	}
 }
 
@@ -388,7 +388,7 @@ void RSP_Cop0_MT (void) {
 		if ( ( RSP_GPR[RSPOpC.rt].W & SP_SET_HALT ) != 0) { SP_STATUS_REG |= SP_STATUS_HALT;  }
 		if ( ( RSP_GPR[RSPOpC.rt].W & SP_CLR_BROKE ) != 0) { SP_STATUS_REG &= ~SP_STATUS_BROKE; }
 		if ( ( RSP_GPR[RSPOpC.rt].W & SP_CLR_INTR ) != 0) { MI_INTR_REG &= ~R4300i_SP_Intr; }
-		if ( ( RSP_GPR[RSPOpC.rt].W & SP_SET_INTR ) != 0) { printf("SP_SET_INTR");  }
+		if ( ( RSP_GPR[RSPOpC.rt].W & SP_SET_INTR ) != 0) { /*printf("SP_SET_INTR")*/;  }
 		if ( ( RSP_GPR[RSPOpC.rt].W & SP_CLR_SSTEP ) != 0) { SP_STATUS_REG &= ~SP_STATUS_SSTEP; }
 		if ( ( RSP_GPR[RSPOpC.rt].W & SP_SET_SSTEP ) != 0) { SP_STATUS_REG |= SP_STATUS_SSTEP;  }
 		if ( ( RSP_GPR[RSPOpC.rt].W & SP_CLR_INTR_BREAK ) != 0) { SP_STATUS_REG &= ~SP_STATUS_INTR_BREAK; }
@@ -427,12 +427,12 @@ void RSP_Cop0_MT (void) {
 		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_CLR_FLUSH ) != 0) { DPC_STATUS_REG &= ~DPC_STATUS_FLUSH; }
 		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_SET_FLUSH ) != 0) { DPC_STATUS_REG |= DPC_STATUS_FLUSH;  }
 		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_CLR_TMEM_CTR ) != 0) { /* printf("RSP: DPC_STATUS_REG: DPC_CLR_TMEM_CTR"); */ }
-		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_CLR_PIPE_CTR ) != 0) { printf("RSP: DPC_STATUS_REG: DPC_CLR_PIPE_CTR"); }
-		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_CLR_CMD_CTR ) != 0) { printf("RSP: DPC_STATUS_REG: DPC_CLR_CMD_CTR"); }
+		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_CLR_PIPE_CTR ) != 0) { /* printf("RSP: DPC_STATUS_REG: DPC_CLR_PIPE_CTR"); */ }
+		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_CLR_CMD_CTR ) != 0) { /* printf("RSP: DPC_STATUS_REG: DPC_CLR_CMD_CTR"); */ }
 		if ( ( RSP_GPR[RSPOpC.rt].W & DPC_CLR_CLOCK_CTR ) != 0) { /* printf("RSP: DPC_STATUS_REG: DPC_CLR_CLOCK_CTR"); */ }
 		break;
-	default:
-		printf("have not implemented RSP MT cpu->CP0 reg (%d)",RSPOpC.rd);
+	//default:
+		//printf("have not implemented RSP MT cpu->CP0 reg (%d)",RSPOpC.rd);
 	}
 }
 
@@ -545,11 +545,11 @@ void RSP_Vector_VMUDL (void) {
 
 	/*if(((*PrgCount) & 0xFFC) == 0xC08) {
 		for(int32_t i = 0; i < 32; i++) {
-			cprintf("i = %d : ", i);
+			//cprintf("i = %d : ", i);
 			for (count = 0; count < 8; count ++ ) {
-				cprintf("%d,%d ", Indx[i].B[count], EleSpec[i].B[Indx[i].B[count]]);
+				//cprintf("%d,%d ", Indx[i].B[count], EleSpec[i].B[Indx[i].B[count]]);
 			}
-			cprintf("\n");
+			//cprintf("\n");
 		}
 
 	}*/
@@ -1701,7 +1701,7 @@ void RSP_Opcode_SWV ( void ) {
 
 void rsp_UnknownOpcode (void) {
 
-	printf("Unhandled RSP opcode (%08x)\n", RSPOpC.Hex);
+	//printf("Unhandled RSP opcode (%08x)\n", RSPOpC.Hex);
 	//ExitThread(0);
 	exit(0);
 }

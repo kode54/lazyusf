@@ -481,7 +481,7 @@ void CompileExit (uint32_t TargetPC, REG_INFO * ExitRegSet, int reason, int Comp
 		break;
 	case DoSysCall:
 		MoveConstToX86reg(NextInstruction == JUMP || NextInstruction == DELAY_SLOT,x86_EDI);
-		printf("extinjg 1\n");
+		//printf("extinjg 1\n");
 		exit(0);
 		Pushad();
 		Call_Direct(DoSysCallException);
@@ -2648,7 +2648,7 @@ void StartRecompilerCPU (void ) {
 		}
 		
 		cpu_stopped = 1;
-	printf("Cpu stopped\n");
+	//printf("Cpu stopped\n");
 }
 
 

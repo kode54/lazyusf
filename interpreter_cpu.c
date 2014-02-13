@@ -24,7 +24,6 @@
  *
  */
 #include <float.h>
-#include <fpu_control.h>
 #include "main.h"
 #include "cpu.h"
 #include "usf.h"
@@ -69,12 +68,12 @@ void R4300i_opcode_COP1_BC (void) {
 }
 
 void R4300i_opcode_COP1_S (void) {
-	 controlfp(RoundingModel);
+	// controlfp(RoundingModel);
 	((void (*)()) R4300i_CoP1_S[ Opcode.funct ])();
 }
 
 void R4300i_opcode_COP1_D (void) {
-	 controlfp(RoundingModel);
+	// controlfp(RoundingModel);
 	((void (*)()) R4300i_CoP1_D[ Opcode.funct ])();
 }
 

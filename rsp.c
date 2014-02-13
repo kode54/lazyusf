@@ -39,16 +39,14 @@ void RSPReInitMemory()
 {
 	
 	if(RSPRecompCode == NULL) {
-		printf("enough memory for RSP RSPRecompCode!");
-		return 0;
+		return;
 	}
 
 	RSPRecompCodeSecondary = RSPRecompCode + RSP_RECOMPMEM_SIZE;
 
 
 	if( RSPJumpTables == NULL ) {
-		DisplayError("Not enough memory for Jump Table!");
-		return 0;
+		return;
 	}
 
 	memset((uint8_t*)RSPJumpTables, 0, 0x2000 * MaxMaps);
@@ -65,7 +63,6 @@ int32_t RSPAllocateMemory (void) {
 
 	RSPRecompCode=(uint8_t *) malloc_exec(RSP_RECOMPMEM_SIZE + RSP_SECRECOMPMEM_SIZE);
 	if(RSPRecompCode == NULL) {
-		DisplayError("Not enough memory for RSP RSPRecompCode!");
 		return 0;
 	}
 
@@ -74,7 +71,6 @@ int32_t RSPAllocateMemory (void) {
 	RSPJumpTables = malloc(0x2000 * MaxMaps);
 
 	if( RSPJumpTables == NULL ) {
-		DisplayError("Not enough memory for Jump Table!");
 		return 0;
 	}
 
@@ -101,6 +97,7 @@ if(RSP_Cpu) {
     	int32_t last = -1, count = 0, el, del;
         RSP_LW_IMEM(*PrgCount, &RSPOpC.Hex);
 
+#if 0
         /*if(*PrgCount == 0x100) {
 		int32_t i= 0;
 			FILE *fil4 = fopen("sc2000i.dmem","wb");
@@ -111,7 +108,7 @@ if(RSP_Cpu) {
 				fwrite(&dat,1,4,fil4);
 			}
 			fclose(fil4);
-        	printf("RSP: %x\n", RSP_GPR[26].UW);
+        	//printf("RSP: %x\n", RSP_GPR[26].UW);
 //            Int3();
 //			RSPBreakPoint();
 		}*/
@@ -132,13 +129,14 @@ if(RSP_Cpu) {
 			for (count = 0; count < 8; count ++ ) {
 				el = Indx[RSPOpC.rs].B[count];
 				del = EleSpec[RSPOpC.rs].B[el];
-				if((last >= 0) && (last != del))
-					printf("not same!\t%d\n", RSPOpC.funct);
+				/*if((last >= 0) && (last != del))
+					printf("not same!\t%d\n", RSPOpC.funct)*/;
                 // 16,19,20,22
                 // funct: 0,16,6,14,44,15,7
 				last = del;
 			}
         }*/
+#endif
 
         //if(RSPOpC.rs < 0x10) printf("%d\n", RSPOpC.rs);
 
@@ -163,7 +161,7 @@ if(RSP_Cpu) {
 
     *PrgCount -= 4;
 
-    return cycles;
+    return /* cycles*/;
 
   } else {
   	RunRecompilerCPU(cycles);
@@ -178,12 +176,12 @@ void RSP_SP_DMA_READ (void) {
 	SP_DRAM_ADDR_REG &= 0x00FFFFFF;
 
 	if (SP_DRAM_ADDR_REG > 0x800000) {
-		printf("SP DMA READ\nSP_DRAM_ADDR_REG not in RDRam space");
+		//printf("SP DMA READ\nSP_DRAM_ADDR_REG not in RDRam space");
 		return;
 	}
 
 	if ((SP_RD_LEN_REG & 0xFFF) + 1  + (SP_MEM_ADDR_REG & 0xFFF) > 0x1000) {
-		printf("SP DMA READ\ncould not fit copy in memory segement\nSP_RD_LEN_REG=%08x\nSP_MEM_ADDR_REG=%08x",SP_RD_LEN_REG,SP_MEM_ADDR_REG);
+		//printf("SP DMA READ\ncould not fit copy in memory segement\nSP_RD_LEN_REG=%08x\nSP_MEM_ADDR_REG=%08x",SP_RD_LEN_REG,SP_MEM_ADDR_REG);
 		return;
 	}
 
@@ -238,12 +236,12 @@ void RSP_SP_DMA_WRITE (void) {
 	SP_DRAM_ADDR_REG &= 0x00FFFFFF;
 
 	if (SP_DRAM_ADDR_REG > 0x800000) {
-		printf("SP DMA WRITE\nSP_DRAM_ADDR_REG not in RDRam space");
+		//printf("SP DMA WRITE\nSP_DRAM_ADDR_REG not in RDRam space");
 		return;
 	}
 
 	if ((SP_WR_LEN_REG & 0xFFF) + 1  + (SP_MEM_ADDR_REG & 0xFFF) > 0x1000) {
-		printf("SP DMA READ\ncould not fit copy in memory segement\nSP_WR_LEN_REG=%08x\nSP_MEM_ADDR_REG=%08x",SP_WR_LEN_REG,SP_MEM_ADDR_REG);
+		//printf("SP DMA READ\ncould not fit copy in memory segement\nSP_WR_LEN_REG=%08x\nSP_MEM_ADDR_REG=%08x",SP_WR_LEN_REG,SP_MEM_ADDR_REG);
 		return;
 	}
 
@@ -328,7 +326,7 @@ void RSP_LFV_DMEM ( uint32_t Addr, int32_t vect, int32_t element ) {
 void RSP_LH_DMEM ( uint32_t Addr, uint16_t * Value ) {
 	if ((Addr & 0x1) != 0) {
 		if (Addr > 0xFFE) {
-			printf("hmmmm.... Problem with:\nRSP_LH_DMEM");
+			//printf("hmmmm.... Problem with:\nRSP_LH_DMEM");
 			return;
 		}
 		Addr &= 0xFFF;
@@ -448,7 +446,7 @@ void RSP_LW_DMEM ( uint32_t Addr, uint32_t * Value ) {
 	if ((Addr & 0x3) != 0) {
 		Addr &= 0xFFF;
 		if (Addr > 0xFFC) {
-			printf("hmmmm.... Problem with:\nRSP_LW_DMEM");
+			//printf("hmmmm.... Problem with:\nRSP_LW_DMEM");
 			return;
 		}
 		*Value = *(uint8_t *)(DMEM + (Addr^ 3)) << 0x18;
@@ -462,7 +460,7 @@ void RSP_LW_DMEM ( uint32_t Addr, uint32_t * Value ) {
 
 void RSP_LW_IMEM ( uint32_t Addr, uint32_t * Value ) {
 	if ((Addr & 0x3) != 0) {
-		printf("Unaligned RSP_LW_IMEM");
+		//printf("Unaligned RSP_LW_IMEM");
 	}
 	* Value = *(uint32_t *)(IMEM + (Addr & 0xFFF));
 }
@@ -590,7 +588,7 @@ void RSP_SFV_DMEM ( uint32_t Addr, int32_t vect, int32_t element ) {
 
 void RSP_SH_DMEM ( uint32_t Addr, uint16_t Value ) {
 	if ((Addr & 0x1) != 0) {
-		printf("Unaligned RSP_SH_DMEM");
+		//printf("Unaligned RSP_SH_DMEM");
 		return;
 	}
 	*(uint16_t *)(DMEM + ((Addr ^ 2) & 0xFFF)) = Value;
@@ -705,7 +703,7 @@ void RSP_SW_DMEM ( uint32_t Addr, uint32_t Value ) {
 
 	if ((Addr & 0x3) != 0) {
 		if (Addr > 0xFFC) {
-			printf("hmmmm.... Problem with:\nRSP_SW_DMEM");
+			//printf("hmmmm.... Problem with:\nRSP_SW_DMEM");
 			return;
 		}
 		*(uint8_t *)(DMEM + (Addr ^ 3)) = (uint8_t)(Value >> 0x18);

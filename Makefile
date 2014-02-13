@@ -1,23 +1,20 @@
-CFLAGS = -w -c `pkg-config --cflags audacious` -fPIC
-LDFLAGS = -o lazyusf.so -shared `pkg-config --libs audacious` -fPIC 
+CFLAGS = -w -c -DUSEX64
+LDFLAGS = -o lazyusf 
 
-OBJS = audio.o audio_hle_main.o audio_ucode1.o audio_ucode2.o audio_ucode3.o audio_ucode3mp3.o cpu.o dma.o exception.o interpreter_cpu.o interpreter_ops.o main.o pif.o psftag.o recompiler_fpu_ops.o recompiler_ops.o registers.o rsp_mmx.o rsp_recompiler_analysis.o rsp_recompiler_ops.o rsp_sse.o rsp_x86.o tlb.o x86.o x86_fpu.o usf.o
+OBJS = audio.o audio_hle_main.o audio_ucode1.o audio_ucode2.o audio_ucode3.o audio_ucode3mp3.o cpu.o dma.o exception.o interpreter_cpu.o interpreter_ops.o main.o pif.o recompiler_fpu_ops.o recompiler_ops.o registers.o rsp_mmx.o rsp_recompiler_analysis.o rsp_recompiler_ops.o rsp_sse.o rsp_x86.o tlb.o x86.o x86_fpu.o usf.o
 
 
-GCC = gcc
-GPP = g++
-LD =  g++
+GCC = clang
+GPP = clang++
+LD =  clang++
 
 
 OPTS = -O2
 ROPTS = -O1
 
-all: lazyusf.so
+all: lazyusf
 
-install: all
-	cp lazyusf.so /usr/lib/audacious/Input
-
-lazyusf.so : $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o
+lazyusf : $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o
 	$(LD) -g $(LDFLAGS) $^
 
 .c.o:
@@ -43,6 +40,6 @@ rsp_recompiler_cpu.o: rsp_recompiler_cpu.c
 
 
 clean:
-	rm -f $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o lazyusf.so > /dev/null
+	rm -f $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o lazyusf > /dev/null
 
 

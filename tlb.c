@@ -68,7 +68,7 @@ void SetupTLB (void) {
 /*
 test=(BYTE *) VirtualAlloc( 0x10, 0x70000, MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if(test == 0) {
-		printf("FAIL!\n");
+		//printf("FAIL!\n");
 		exit(0);
 	}
 */

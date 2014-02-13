@@ -403,7 +403,7 @@ void Map_GPR_32bit (BLOCK_SECTION * Section, int32_t Reg, uint32_t SignValue, in
 	if (IsUnknown(Reg) || IsConst(Reg)) {
 		x86Reg = FreeX86Reg(Section);
 		if (x86Reg < 0) {
-			printf("out of registers\n");
+			//printf("out of registers\n");
 			return;
 		}
 	} else {
@@ -456,11 +456,11 @@ void Map_GPR_64bit (BLOCK_SECTION * Section, int32_t Reg, int32_t MipsRegToLoad)
 	ProtectGPR(Section,Reg);
 	if (IsUnknown(Reg) || IsConst(Reg)) {
 		x86Hi = FreeX86Reg(Section);
-		if (x86Hi < 0) { printf("out of registers\n"); return; }
+		if (x86Hi < 0) { /*printf("out of registers\n");*/ return; }
 		x86Protected(x86Hi) = 1;
 
 		x86lo = FreeX86Reg(Section);
-		if (x86lo < 0) { printf("out of registers\n"); return; }
+		if (x86lo < 0) { /*printf("out of registers\n");*/ return; }
 		x86Protected(x86lo) = 1;
 
 	} else {
@@ -468,7 +468,7 @@ void Map_GPR_64bit (BLOCK_SECTION * Section, int32_t Reg, int32_t MipsRegToLoad)
 		if (Is32Bit(Reg)) {
 			x86Protected(x86lo) = 1;
 			x86Hi = FreeX86Reg(Section);
-			if (x86Hi < 0) { printf("out of registers\n"); return; }
+			if (x86Hi < 0) { /*printf("out of registers\n");*/ return; }
 			x86Protected(x86Hi) = 1;
 		} else {
 			x86Hi = MipsRegHi(Reg);

@@ -1335,8 +1335,8 @@ void Compile_R4300i_LUI (BLOCK_SECTION * Section) {
 void Compile_R4300i_DADDIU (BLOCK_SECTION * Section) {
 
 
-	if (Opcode.rs != 0) { UnMap_GPR(Section,Opcode.rs,1); }
-	if (Opcode.rs != 0) { UnMap_GPR(Section,Opcode.rt,1); }
+	if (IsMapped(Opcode.rs)) { UnMap_GPR(Section,Opcode.rs,1); }
+	if (IsMapped(Opcode.rt)) { UnMap_GPR(Section,Opcode.rt,1); }
 	Pushad();
 	MoveConstToVariable(Opcode.Hex, &Opcode.Hex );
 	Call_Direct(r4300i_DADDIU);
@@ -1345,8 +1345,8 @@ void Compile_R4300i_DADDIU (BLOCK_SECTION * Section) {
 
 void Compile_R4300i_LDL (BLOCK_SECTION * Section) {
 
-	if (Opcode.base != 0) { UnMap_GPR(Section,Opcode.base,1); }
-	if (Opcode.rt != 0) { UnMap_GPR(Section,Opcode.rt,1); }
+	if (IsMapped(Opcode.base)) { UnMap_GPR(Section,Opcode.base,1); }
+	if (IsMapped(Opcode.rt)) { UnMap_GPR(Section,Opcode.rt,1); }
 	Pushad();
 	MoveConstToVariable(Opcode.Hex, &Opcode.Hex );
 	Call_Direct(r4300i_LDL);
@@ -1356,8 +1356,8 @@ void Compile_R4300i_LDL (BLOCK_SECTION * Section) {
 
 void Compile_R4300i_LDR (BLOCK_SECTION * Section) {
 
-	if (Opcode.base != 0) { UnMap_GPR(Section,Opcode.base,1); }
-	if (Opcode.rt != 0) { UnMap_GPR(Section,Opcode.rt,1); }
+	if (IsMapped(Opcode.base)) { UnMap_GPR(Section,Opcode.base,1); }
+	if (IsMapped(Opcode.rt)) { UnMap_GPR(Section,Opcode.rt,1); }
 	Pushad();
 	MoveConstToVariable(Opcode.Hex, &Opcode.Hex );
 	Call_Direct(r4300i_LDR);
@@ -2129,8 +2129,8 @@ void Compile_R4300i_SWR (BLOCK_SECTION * Section) {
 
 void Compile_R4300i_SDL (BLOCK_SECTION * Section) {
 
-	if (Opcode.base != 0) { UnMap_GPR(Section,Opcode.base,1); }
-	if (Opcode.rt != 0) { UnMap_GPR(Section,Opcode.rt,1); }
+	if (IsMapped(Opcode.base)) { UnMap_GPR(Section,Opcode.base,1); }
+	if (IsMapped(Opcode.rt)) { UnMap_GPR(Section,Opcode.rt,1); }
 	Pushad();
 	MoveConstToVariable(Opcode.Hex, &Opcode.Hex );
 	Call_Direct(r4300i_SDL);
@@ -2140,8 +2140,8 @@ void Compile_R4300i_SDL (BLOCK_SECTION * Section) {
 
 void Compile_R4300i_SDR (BLOCK_SECTION * Section) {
 
-	if (Opcode.base != 0) { UnMap_GPR(Section,Opcode.base,1); }
-	if (Opcode.rt != 0) { UnMap_GPR(Section,Opcode.rt,1); }
+	if (IsMapped(Opcode.base)) { UnMap_GPR(Section,Opcode.base,1); }
+	if (IsMapped(Opcode.rt)) { UnMap_GPR(Section,Opcode.rt,1); }
 	Pushad();
 	MoveConstToVariable(Opcode.Hex, &Opcode.Hex );
 	Call_Direct(r4300i_SDR);
@@ -3122,8 +3122,8 @@ void Compile_R4300i_SPECIAL_DIVU ( BLOCK_SECTION * Section) {
 void Compile_R4300i_SPECIAL_DMULT (BLOCK_SECTION * Section) {
 
 
-	if (Opcode.rs != 0) { UnMap_GPR(Section,Opcode.rs,1); }
-	if (Opcode.rs != 0) { UnMap_GPR(Section,Opcode.rt,1); }
+	if (IsMapped(Opcode.rs)) { UnMap_GPR(Section,Opcode.rs,1); }
+	if (IsMapped(Opcode.rt)) { UnMap_GPR(Section,Opcode.rt,1); }
 	Pushad();
 	MoveConstToVariable(Opcode.Hex, &Opcode.Hex );
 	Call_Direct(r4300i_SPECIAL_DMULT);

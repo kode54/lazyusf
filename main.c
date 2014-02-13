@@ -25,14 +25,14 @@ void StopEmulation(void)
 }
 
 void DisplayError (char * Message, ...) {
-	char Msg[1000];
-	va_list ap;
+	//char Msg[1000];
+	//va_list ap;
 
-	va_start( ap, Message );
-	vsprintf( Msg, Message, ap );
-	va_end( ap );
+	//va_start( ap, Message );
+	//vsprintf( Msg, Message, ap );
+	//va_end( ap );
 
-	printf("Error: %s\n", Msg);
+	//printf("Error: %s\n", Msg);
 }
 
 void UsfSleep(int32_t time)

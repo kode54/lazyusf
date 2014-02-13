@@ -952,5 +952,5 @@ void RunRecompilerCPU ( uint32_t Cycles ) {
 //	if (IsMmxEnabled == 1) {
 //		_Emms();
 //	}
-	return Cycles;
+	return /*Cycles*/;
 }

@@ -35,17 +35,7 @@
 #include "registers.h"
 #include "rsp.h"
 
-#include <audacious/util.h>
-#include <audacious/configdb.h>
-#include <audacious/plugin.h>
-#include <audacious/output.h>
-#include <audacious/i18n.h>
-
-#include <unistd.h>
-#include <pthread.h>
 #include <stdlib.h>
-extern InputPlayback * pcontext;
-extern GThread * decode_thread;
 
 uint32_t NextInstruction = 0, JumpToLocation = 0, AudioIntrReg = 0;
 CPU_ACTION * CPU_Action = 0;
@@ -343,8 +333,6 @@ void DoSomething ( void ) {
 		//StopEmulation();
 		cpu_running = 0;
 		//printf("Stopping?\n");
-		if(!(fake_seek_stopping&3))
-			g_thread_exit(NULL);
 	}
 	if (CPU_Action->CheckInterrupts) {
 		CPU_Action->CheckInterrupts = 0;
@@ -502,8 +490,6 @@ void StartEmulationFromSave ( void * savestate ) {
 
 	OpenSound();
 	
-	pcontext->set_params(pcontext, NULL, 0, SampleRate * 4, SampleRate, 2);	
-
 	if(enableFIFOfull) {
 		const float VSyncTiming = 789000.0f;
 		double BytesPerSecond = 48681812.0 / (AI_DACRATE_REG + 1) * 4;
@@ -557,7 +543,7 @@ void RunRsp (void) {
 				break;
 			case 2: {
 
-					if(use_audiohle && !is_seeking) {
+					if(use_audiohle) {
 						OSTask_t *task = (OSTask_t*)(DMEM + 0xFC0);
 						if(audio_ucode(task))
 							break;
@@ -580,8 +566,7 @@ void RunRsp (void) {
 				break;
 			}
 
-			if(!is_seeking)
-				real_run_rsp(100);
+			real_run_rsp(100);
 			SP_STATUS_REG |= (0x0203 );
 			if ((SP_STATUS_REG & SP_STATUS_INTR_BREAK) != 0 ) {
 				MI_INTR_REG |= 1;
@@ -627,17 +612,5 @@ void _Emms() {
 
 
 
-#include <fpu_control.h>
-
 void controlfp(uint32_t control) {
-	uint32_t OldControl = 0;
-
-	_FPU_GETCW(OldControl);
-	OldControl &= ~(_FPU_RC_ZERO | _FPU_RC_UP | _FPU_RC_DOWN | _FPU_RC_NEAREST);
-
-	OldControl |= control;
-
-	_FPU_SETCW(OldControl);
-
 }
-
