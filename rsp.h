@@ -351,13 +351,9 @@ extern uint32_t RSP_NextInstruction, RSP_JumpTo;
 extern uint32_t RSP_Running;
 
 
-//extern uint8_t * RSPRecompPos, * RSPRecompCode, * RSPRecompCodeSecondary;
-//extern uint8_t * RSPJumpTable;
 #define MaxMaps	32
 
 extern uint32_t NoOfMaps, MapsCRC[MaxMaps], Table, ConditionalMove;
-extern uint8_t * RSPRecompCode, * RSPRecompCodeSecondary, * RSPRecompPos, *RSPJumpTables;
-extern void ** RSPJumpTable;
 
 
 #define NORMAL					0

@@ -7,16 +7,11 @@
 #include "rsp.h"
 #include "types.h"
 
-#include "rsp_recompiler_cpu.h"
-
 
 
 uint32_t NoOfMaps, MapsCRC[MaxMaps], Table,ConditionalMove=0;
-uint8_t * RSPRecompCode = 0, * RSPRecompCodeSecondary, * RSPRecompPos, *RSPJumpTables;
-void ** RSPJumpTable;
 
 
-RSP_COMPILER Compiler;
 //REGISTER32 RSP_GPR[32], RSP_Flags[4];
 REGISTER32 *RSP_GPR, RSP_Flags[4];
 REGISTER * RSP_ACCUM;
@@ -30,113 +25,18 @@ REGISTER32 Recp, RecpResult, SQroot, SQrootResult;
 
 uint32_t RSP_NextInstruction, RSP_JumpTo;
 uint32_t RSP_Running = 0;
-int32_t RSP_Cpu = 0;
 
-
-void RSPSetJumpTable (void);
-
-void RSPReInitMemory()
-{
-	
-	if(RSPRecompCode == NULL) {
-		return;
-	}
-
-	RSPRecompCodeSecondary = RSPRecompCode + RSP_RECOMPMEM_SIZE;
-
-
-	if( RSPJumpTables == NULL ) {
-		return;
-	}
-
-	memset((uint8_t*)RSPJumpTables, 0, 0x2000 * MaxMaps);
-	memset((uint8_t*)RSPRecompCode, 0, 0x00400000);
-	memset((uint8_t*)RSPRecompCodeSecondary, 0, 0x00200000);
-	
-
-	RSPJumpTable = (void **)RSPJumpTables;
-	RSPRecompPos = RSPRecompCode;
-	NoOfMaps = 0;
-}
-
-int32_t RSPAllocateMemory (void) {
-
-	RSPRecompCode=(uint8_t *) malloc_exec(RSP_RECOMPMEM_SIZE + RSP_SECRECOMPMEM_SIZE);
-	if(RSPRecompCode == NULL) {
-		return 0;
-	}
-
-	RSPRecompCodeSecondary = RSPRecompCode + RSP_RECOMPMEM_SIZE;
-
-	RSPJumpTables = malloc(0x2000 * MaxMaps);
-
-	if( RSPJumpTables == NULL ) {
-		return 0;
-	}
-
-	memset((uint8_t*)RSPJumpTables, 0, 0x2000 * MaxMaps);
-	memset((uint8_t*)RSPRecompCode, 0, 0x00400000);
-	memset((uint8_t*)RSPRecompCodeSecondary, 0, 0x00200000);
-
-	RSPJumpTable = (void **)RSPJumpTables;
-	RSPRecompPos = RSPRecompCode;
-	NoOfMaps = 0;
-	return 1;
-}
 
 void RSP_LW_IMEM ( uint32_t Addr, uint32_t * Value );
 FILE *qfil = 0;
 
 void real_run_rsp(uint32_t cycles)
 {
-//replace with interpreter
-if(RSP_Cpu) {
 	RSP_Running = 1;
 
     while(RSP_Running) {
     	int32_t last = -1, count = 0, el, del;
         RSP_LW_IMEM(*PrgCount, &RSPOpC.Hex);
-
-#if 0
-        /*if(*PrgCount == 0x100) {
-		int32_t i= 0;
-			FILE *fil4 = fopen("sc2000i.dmem","wb");
-			for(i = 0; i < 0x2000;i+=4) {
-				uint32_t dat = 0;
-				dat = *(int32_t*)(DMEM + i);
-				DoBswap(&dat);
-				fwrite(&dat,1,4,fil4);
-			}
-			fclose(fil4);
-        	//printf("RSP: %x\n", RSP_GPR[26].UW);
-//            Int3();
-//			RSPBreakPoint();
-		}*/
-/*
-			if(!qfil) qfil = fopen("rsplogi.log","wb");
-	fprintf(qfil,"PC = %08x    ", *PrgCount);
-			fprintf(qfil,"r0=%08x at=%08x v0=%08x v1=%08x a0=%08x a1=%08x a2=%08x a3=%08x t0=%08x t1=%08x t2=%08x t3=%08x t4=%08x t5=%08x t6=%08x t7=%08x s0=%08x s1=%08x s2=%08x s3=%08x s4=%08x s5=%08x s6=%08x s7=%08x t8=%08x t9=%08x k0=%08x k1=%08x gp=%08x sp=%08x s8=%08x ra=%08x\n",
-				RSP_GPR[0].UW,RSP_GPR[1].UW,RSP_GPR[2].UW,RSP_GPR[3].UW,
-			RSP_GPR[4].UW,RSP_GPR[5].UW,RSP_GPR[6].UW,RSP_GPR[7].UW,
-			RSP_GPR[8].UW,RSP_GPR[9].UW,RSP_GPR[10].UW,RSP_GPR[11].UW,RSP_GPR[12].UW,
-			RSP_GPR[13].UW,RSP_GPR[14].UW,RSP_GPR[15].UW,RSP_GPR[16].UW,
-			RSP_GPR[17].UW,RSP_GPR[18].UW,RSP_GPR[19].UW,RSP_GPR[20].UW,
-			RSP_GPR[21].UW,RSP_GPR[22].UW,RSP_GPR[23].UW,RSP_GPR[24].UW,
-			RSP_GPR[25].UW,RSP_GPR[26].UW,RSP_GPR[27].UW,RSP_GPR[28].UW,
-			RSP_GPR[29].UW,RSP_GPR[30].UW,RSP_GPR[31].UW);
-*/
-        /*if((RSPOpC.op == 18) && (RSPOpC.rs & 0x10)) {
-			for (count = 0; count < 8; count ++ ) {
-				el = Indx[RSPOpC.rs].B[count];
-				del = EleSpec[RSPOpC.rs].B[el];
-				/*if((last >= 0) && (last != del))
-					printf("not same!\t%d\n", RSPOpC.funct)*/;
-                // 16,19,20,22
-                // funct: 0,16,6,14,44,15,7
-				last = del;
-			}
-        }*/
-#endif
 
         //if(RSPOpC.rs < 0x10) printf("%d\n", RSPOpC.rs);
 
@@ -162,11 +62,6 @@ if(RSP_Cpu) {
     *PrgCount -= 4;
 
     return /* cycles*/;
-
-  } else {
-  	RunRecompilerCPU(cycles);
-  }
-
 }
 
 void RSP_SP_DMA_READ (void) {
@@ -219,12 +114,6 @@ void RSP_SP_DMA_READ (void) {
 		}
 	}
 #endif
-	if ((!RSP_Cpu) && ((SP_MEM_ADDR_REG & 0x1000) != 0)) {
-		RSPSetJumpTable();
-	}
-
-
-
 	SP_DMA_BUSY_REG = 0;
 	SP_STATUS_REG  &= ~SP_STATUS_DMA_BUSY;
 }
@@ -746,12 +635,6 @@ int32_t init_rsp(void)
 	RSP_NextInstruction = 0;
 	RSP_JumpTo = 0;
 
-	dwBuffer = MainBuffer;
-
-	pLastSecondary == NULL;
-	pLastPrimary = NULL;
-	RSPBlockID = 1;
-
 	memset(RSP_GPR,0,sizeof(RSP_GPR));
 	memset(RSP_Vect,0,sizeof(RSP_Vect));
 	memset(RSP_ACCUM,0,sizeof(RSP_ACCUM));
@@ -998,68 +881,6 @@ int32_t init_rsp(void)
 
 	PrgCount = &SP_PC_REG;
 
-	memset(&Compiler, 0, sizeof(Compiler));
-
-	Compiler.bAlignGPR = 1;
-	Compiler.bAlignVector = 1;
-	Compiler.bFlags = 1;
-	Compiler.bReOrdering = 1;
-	Compiler.bSections = 0; //do i really need to do this?
-	Compiler.bDest = 1;
-	Compiler.bAccum = 1;
-	Compiler.bGPRConstants = 1;
-
-	if(!fake_seek_stopping) {
-		RSPAllocateMemory();
-	} else {
-		RSPReInitMemory();
-	}
-
 	memset(RSP_GPR,0,sizeof(RSP_GPR));
 	memset(RSP_Vect,0,sizeof(RSP_Vect));
-
-#ifndef USEX64
-	asm volatile("push %%ebx; mov $1, %%eax; cpuid; pop %%ebx" : : "a"(CpuFeatures) : "edx","ecx");
-#else
-	asm volatile("push %%rbx; mov $1, %%eax; cpuid; pop %%rbx" : : "a"(CpuFeatures) : "rdx","rcx");
-#endif
-	
-	
-	Compiler.mmx2 = CpuFeatures & 0x4000000;
-	Compiler.sse = CpuFeatures & 0x2000000;
-	Compiler.mmx = CpuFeatures & 0x800000;
-
-	if(!RSP_Cpu)
-		BuildRecompilerCPU();
-
-	ClearAllx86Code();
-
-}
-
-void RSPSetJumpTable (void) {
-	uint32_t CRC, count;
-
-	CRC = 0;
-	for (count = 0; count < 0x800; count += 0x40) {
-		CRC += *(uint32_t *)(IMEM + count);
-	}
-
-	for (count = 0; count <	NoOfMaps; count++ ) {
-		if (CRC == MapsCRC[count]) {
-			RSPJumpTable = (void **)(RSPJumpTables + (count * (sizeof(void*) * 0x400)));
-			Table = count;
-			return;
-		}
-	}
-
-	if (NoOfMaps == MaxMaps) {
-		DisplayError("Used up all the Jump tables in the rsp");
-		StopEmulation();
-	}
-
-	MapsCRC[NoOfMaps] = CRC;
-
-	RSPJumpTable = (void **)(RSPJumpTables + (NoOfMaps * (sizeof(void*) * 0x400) ));
-	Table = NoOfMaps;
-	NoOfMaps += 1;
 }

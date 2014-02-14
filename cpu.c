@@ -30,8 +30,6 @@
 #include "usf.h"
 #include "audio.h"
 #include "audio_hle.h"
-#include "recompiler_cpu.h"
-#include "x86.h"
 #include "registers.h"
 #include "rsp.h"
 
@@ -42,7 +40,7 @@ CPU_ACTION * CPU_Action = 0;
 SYSTEM_TIMERS * Timers = 0;
 OPCODE Opcode;
 uint32_t CPURunning = 0, SPHack = 0;
-uint32_t * WaitMode = 0, CPU_Type = CPU_Recompiler;
+uint32_t * WaitMode = 0;
 
 
 void ChangeCompareTimer(void) {
@@ -389,10 +387,6 @@ uint32_t Machine_LoadStateFromRAM(void * savestatespace) {
 	ReadFromMem( savestatespace,&SaveRDRAMSize,sizeof(SaveRDRAMSize),&offset);
 	ReadFromMem( savestatespace,&LoadHeader,0x40,&offset);
 
-	if (CPU_Type != CPU_Interpreter) {
-		ResetRecompCode();
-	}
-
 	Timers->CurrentTimerType = -1;
 	Timers->Timer = 0;
 	for (count = 0; count < MaxTimers; count ++) { Timers->Active[count] = 0; }
@@ -441,12 +435,9 @@ uint32_t Machine_LoadStateFromRAM(void * savestatespace) {
 
 	return 1;
 }
-extern int32_t RSP_Cpu;
 extern int32_t SampleRate;
 void StartEmulationFromSave ( void * savestate ) {
 	uint32_t count = 0;
-	if(use_interpreter)
-		CPU_Type = CPU_Interpreter;
 	
 	//printf("Starting generic Cpu\n");
 
@@ -456,11 +447,6 @@ void StartEmulationFromSave ( void * savestate ) {
 	memset(DMEM, 0, 0x1000);
 	memset(IMEM, 0, 0x1000);
 	memset(TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
-	if(!use_interpreter) {
-		memset(JumpTable, 0, 0x200000 * sizeof(uintptr_t));
-		memset(RecompCode, 0xcc, NormalCompileBufferSize);	// fill with Breakpoints
-		memset(DelaySlotTable, 0, ((0x1000000) >> 0xA));
-	}
 
 	memset(CPU_Action,0,sizeof(CPU_Action));
 	WrittenToRom = 0;
@@ -470,7 +456,6 @@ void StartEmulationFromSave ( void * savestate ) {
 	SetupRegisters(Registers);
 
 	BuildInterpreter();
-	RecompPos = RecompCode;
 
 	Timers->CurrentTimerType = -1;
 	Timers->Timer = 0;
@@ -505,13 +490,7 @@ void StartEmulationFromSave ( void * savestate ) {
 	cpu_running = 1;
 	fake_seek_stopping = 0;
 
-	switch (CPU_Type) {
-		case CPU_Interpreter: StartInterpreterCPU(); break;
-		case CPU_Recompiler: StartRecompilerCPU(); break;
-	default:
-		DisplayError("Unhandled CPU %d",CPU_Type);
-	}
-
+	StartInterpreterCPU();
 }
 
 

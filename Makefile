@@ -1,7 +1,7 @@
 CFLAGS = -w -c -DUSEX64
 LDFLAGS = -o lazyusf 
 
-OBJS = audio.o audio_hle_main.o audio_ucode1.o audio_ucode2.o audio_ucode3.o audio_ucode3mp3.o cpu.o dma.o exception.o interpreter_cpu.o interpreter_ops.o main.o pif.o recompiler_fpu_ops.o recompiler_ops.o registers.o rsp_mmx.o rsp_recompiler_analysis.o rsp_recompiler_ops.o rsp_sse.o rsp_x86.o tlb.o x86.o x86_fpu.o usf.o
+OBJS = audio.o audio_hle_main.o audio_ucode1.o audio_ucode2.o audio_ucode3.o audio_ucode3mp3.o cpu.o dma.o exception.o interpreter_cpu.o interpreter_ops.o main.o pif.o registers.o tlb.o usf.o memory.o rsp.o rsp_interpreter_cpu.o
 
 
 GCC = clang
@@ -14,7 +14,7 @@ ROPTS = -O1
 
 all: lazyusf
 
-lazyusf : $(OBJS) recompiler_cpu.o memory.o rsp.o rsp_interpreter_cpu.o rsp_recompiler_cpu.o
+lazyusf : $(OBJS)
 	$(LD) -g $(LDFLAGS) $^
 
 .c.o:

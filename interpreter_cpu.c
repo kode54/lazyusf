@@ -732,6 +732,5 @@ void StartInterpreterCPU (void ) {
 void TestInterpreterJump (uint32_t PC, uint32_t TargetPC, int32_t Reg1, int32_t Reg2) {
 	if (PC != TargetPC) { return; }
 	if (DelaySlotEffectsCompare(PC,Reg1,Reg2)) { return; }
-	if (CPU_Type != CPU_Interpreter) { return; }
 	InPermLoop();
 }

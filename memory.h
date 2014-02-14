@@ -36,8 +36,6 @@ extern uintptr_t *TLB_Map;
 extern uint8_t * MemChunk;
 
 extern uint8_t *N64MEM, *RDRAM, *DMEM, *IMEM, * ROMPages[0x400], *savestatespace, * NOMEM;
-extern void ** JumpTable, ** DelaySlotTable;
-extern uint8_t *RecompCode, *RecompPos;
 extern uint32_t WrittenToRom, MemoryState;
 
 /* Memory Control */

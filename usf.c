@@ -16,8 +16,6 @@ uint32_t enablecompare = 0, enableFIFOfull = 0;
 
 uint32_t usf_length = 0, usf_fade_length = 0;
 
-extern int32_t RSP_Cpu;
-
 int LoadUSF()
 {
 	uint32_t reserved_size, temp;
@@ -88,8 +86,6 @@ int LoadUSF()
 void usf_init()
 {
 	use_audiohle = 0;
-	use_interpreter = 1;
-	RSP_Cpu = 0; // 0 is recompiler, 1 is interpreter
 }
 
 void usf_destroy()

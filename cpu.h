@@ -28,9 +28,7 @@
 
 #include "interpreter_cpu.h"
 #include "interpreter_ops.h"
-#include "recompiler_cpu.h"
 #include "registers.h"
-#include "recompiler_ops.h"
 #include "tlb.h"
 #include "memory.h"
 #include "dma.h"
@@ -99,7 +97,7 @@ enum SaveType {
 };
 
 
-extern uint32_t NextInstruction, JumpToLocation, ManualPaused, CPU_Paused, CountPerOp, AudioIntrReg, * WaitMode, CPU_Type;
+extern uint32_t NextInstruction, JumpToLocation, ManualPaused, CPU_Paused, CountPerOp, AudioIntrReg, * WaitMode;
 extern CPU_ACTION * CPU_Action;
 extern SYSTEM_TIMERS * Timers;
 extern OPCODE Opcode;
