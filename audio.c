@@ -1,5 +1,4 @@
 #include "usf.h"
-#include "audio_hle.h"
 #include "memory.h"
 #include "audio.h"
 #include <stdlib.h>
@@ -11,6 +10,8 @@ static int16_t samplebuf[16384];
 void OpenSound(void)
 {
 }
+
+// #define RAW_DUMP
 
 void AddBuffer(unsigned char *buf, unsigned int length) {
 	int32_t i = 0, out = 0;
@@ -24,15 +25,19 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 		samplebuf[out++] = ((int16_t*)buf)[i];
 	}
 	
+#ifndef RAW_DUMP
 	fwrite( &SampleRate, sizeof(int32_t), 1, stdout );
 	fwrite( &out, sizeof(int32_t), 1, stdout );
+#endif
 	fwrite( samplebuf, sizeof(int16_t), out, stdout );
+#ifndef RAW_DUMP
 	fflush( stdout );
 
 	if ( fread( &out, sizeof(int32_t), 1, stdin ) < 1 )
 		out = 0;
 
 	cpu_running = out;
+#endif
 }
 
 void AiLenChanged(void) {

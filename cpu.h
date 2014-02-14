@@ -37,11 +37,6 @@
 #include "opcode.h"
 #include "usf.h"
 
-#ifdef __LP64__
-#define USEX86
-#define EXTREGS
-#endif
-
 typedef struct {
 	int32_t DoSomething;
 	int32_t CloseCPU;

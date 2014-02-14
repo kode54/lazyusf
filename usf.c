@@ -10,7 +10,7 @@
 
 #include "types.h"
 
-uint32_t cpu_running = 0, use_interpreter = 0, use_audiohle = 0, is_paused = 0, cpu_stopped = 1, fake_seek_stopping = 0;
+uint32_t cpu_running = 0, use_interpreter = 0, is_paused = 0, cpu_stopped = 1, fake_seek_stopping = 0;
 
 uint32_t enablecompare = 0, enableFIFOfull = 0;
 
@@ -83,16 +83,6 @@ int LoadUSF()
 }
 
 
-void usf_init()
-{
-	use_audiohle = 0;
-}
-
-void usf_destroy()
-{
-
-}
-
 void usf_play()
 {
 	uint32_t i = 0;
@@ -121,7 +111,6 @@ void usf_play()
 
 int main(void)
 {
-	usf_init();
 	usf_play();
 	return 0;
 }

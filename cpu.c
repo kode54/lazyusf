@@ -29,7 +29,6 @@
 #include "cpu.h"
 #include "usf.h"
 #include "audio.h"
-#include "audio_hle.h"
 #include "registers.h"
 #include "rsp.h"
 
@@ -522,22 +521,7 @@ void RunRsp (void) {
 				break;
 			case 2: {
 
-					if(use_audiohle) {
-						OSTask_t *task = (OSTask_t*)(DMEM + 0xFC0);
-						if(audio_ucode(task))
-							break;
-
-					} else
-						break;
-
-					SP_STATUS_REG |= (0x0203 );
-					if ((SP_STATUS_REG & SP_STATUS_INTR_BREAK) != 0 ) {
-						MI_INTR_REG |= 1;
-						CheckInterrupts();
-					}
-
-                    return;
-
+					break;
 				}
 				break;
 			default:

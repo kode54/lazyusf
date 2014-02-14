@@ -106,10 +106,10 @@ int32_t Allocate_Memory ( void ) {
     Timers = (SYSTEM_TIMERS*)((uintptr_t)Registers + 0x500);
 	WaitMode = (uint32_t *)(Timers + sizeof(SYSTEM_TIMERS));
 	CPU_Action = (CPU_ACTION *)(WaitMode + 4);
-	RSP_GPR = (REGISTER32 *)(CPU_Action + sizeof(CPU_ACTION));
-	DMEM = (uint8_t *)(RSP_GPR + (32 * 8));
-	RSP_ACCUM = (REGISTER *)(DMEM + 0x2000);
-	RSP_Vect = (VECTOR *)((char*)RSP_ACCUM + (sizeof(REGISTER)*32));
+	//RSP_GPR = (struct RSP_GPR_TYPE *)(CPU_Action + sizeof(CPU_ACTION));
+	//DMEM = (uint8_t *)(RSP_GPR + (32 * 16));
+    DMEM = (uint8_t *)(CPU_Action + sizeof(CPU_ACTION));
+	//RSP_ACCUM = (struct RSP_ACCUM_TYPE *)(DMEM + 0x2000);
 
 
 	RDRAM = (uint8_t *)(N64MEM);
