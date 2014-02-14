@@ -29,10 +29,9 @@ void AddBuffer(unsigned char *buf, unsigned int length) {
 	fwrite( samplebuf, sizeof(int16_t), out, stdout );
 	fflush( stdout );
 
-	do {
-		i = fread( &out, sizeof(int32_t), 1, stdin );
-		if ( i == 0 ) usleep( 5000 );
-	} while ( i == 0 );
+	if ( fread( &out, sizeof(int32_t), 1, stdin ) < 1 )
+		out = 0;
+
 	cpu_running = out;
 }
 
