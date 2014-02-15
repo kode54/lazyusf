@@ -27,150 +27,123 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <memory.h>
 #include <sys/mman.h>
 
-
+#include "usf.h"
 #include "main.h"
 #include "cpu.h"
 #include "audio.h"
 #include "rsp.h"
-#include "usf.h"
 
-uintptr_t *TLB_Map = 0;
-uint8_t * MemChunk = 0;
-uint32_t RdramSize = 0x800000, SystemRdramSize = 0x800000, RomFileSize = 0x4000000;
-uint8_t * N64MEM = 0, * RDRAM = 0, * DMEM = 0, * IMEM = 0, * ROMPages[0x400], * savestatespace = 0, * NOMEM = 0;
+#include "usf_internal.h"
 
-uint32_t WrittenToRom = 0;
-uint32_t WroteToRom = 0;
-uint32_t TempValue = 0;
-uint32_t MemoryState = 0;
-
-uint8_t EmptySpace = 0;
-
-uint8_t * PageROM(uint32_t addr) {
-	return (ROMPages[addr/0x10000])?ROMPages[addr/0x10000]+(addr%0x10000):&EmptySpace;
+uint8_t * PageROM(usf_state_t * state, uint32_t addr) {
+	return (state->ROMPages[addr/0x10000])?state->ROMPages[addr/0x10000]+(addr%0x10000):&state->EmptySpace;
 }
 
-
-#define PAGE_SIZE	4096
-void *malloc_exec(uint32_t bytes)
-{
-	void *ptr = NULL;
-
-	ptr = mmap(0,bytes,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANON, 0, 0);
-
-	return ptr;
-
-}
-
-
-int32_t Allocate_Memory ( void ) {
+int32_t Allocate_Memory ( void * state ) {
 	uint32_t i = 0;
 	//RdramSize = 0x800000;
-
+    
 	// Allocate the N64MEM and TLB_Map so that they are in each others 4GB range
 	// Also put the registers there :)
 
 
 	// the mmap technique works craptacular when the regions don't overlay
 
-	MemChunk = mmap(NULL, 0x100000 * sizeof(uintptr_t) + 0x1D000 + RdramSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, 0, 0);
+	USF_STATE->MemChunk = mmap(NULL, 0x100000 * sizeof(uintptr_t) + 0x1D000 + USF_STATE->RdramSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, 0, 0);
 
-	TLB_Map = (uintptr_t*)MemChunk;
-	if (TLB_Map == NULL) {
+	USF_STATE->TLB_Map = (uintptr_t*)USF_STATE->MemChunk;
+	if (USF_STATE->TLB_Map == NULL) {
 		return 0;
 	}
 
-	memset(TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
+	memset(USF_STATE->TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
 
-	N64MEM = mmap((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t) + 0x10000, 0xD000 + RdramSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
-	if(N64MEM == NULL) {
+	USF_STATE->N64MEM = mmap((uintptr_t)USF_STATE->MemChunk + 0x100000 * sizeof(uintptr_t) + 0x10000, 0xD000 + USF_STATE->RdramSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
+	if(USF_STATE->N64MEM == NULL) {
 		DisplayError("Failed to allocate N64MEM");
 		return 0;
 	}
 	
-	memset(N64MEM, 0, RdramSize);
+	//memset(state->N64MEM, 0, state->RdramSize);
 
-	NOMEM = mmap((uintptr_t)N64MEM + RdramSize, 0xD000, PROT_NONE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
+	USF_STATE->NOMEM = mmap((uintptr_t)USF_STATE->N64MEM + USF_STATE->RdramSize, 0xD000, PROT_NONE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
 	
-	if(RdramSize == 0x400000)
+	if(USF_STATE->RdramSize == 0x400000)
 	{
 	//	munmap(N64MEM + 0x400000, 0x400000);
 	}
 
-	Registers = (N64_REGISTERS *)((uintptr_t)MemChunk + 0x100000 * sizeof(uintptr_t));
-	//TLBLoadAddress = (uint32_t *)((uintptr_t)Registers + 0x500);
-	//Timers = (SYSTEM_TIMERS*)(TLBLoadAddress + 4);
-    Timers = (SYSTEM_TIMERS*)((uintptr_t)Registers + 0x500);
-	WaitMode = (uint32_t *)(Timers + sizeof(SYSTEM_TIMERS));
-	CPU_Action = (CPU_ACTION *)(WaitMode + 4);
-	//RSP_GPR = (struct RSP_GPR_TYPE *)(CPU_Action + sizeof(CPU_ACTION));
-	//DMEM = (uint8_t *)(RSP_GPR + (32 * 16));
-    DMEM = (uint8_t *)(CPU_Action + sizeof(CPU_ACTION));
-	//RSP_ACCUM = (struct RSP_ACCUM_TYPE *)(DMEM + 0x2000);
+	USF_STATE->Registers = (N64_REGISTERS *)((uintptr_t)USF_STATE->MemChunk + 0x100000 * sizeof(uintptr_t));
+	//USF_STATE->TLBLoadAddress = (uint32_t *)((uintptr_t)USF_STATE->Registers + 0x500);
+	//USF_STATE->Timers = (SYSTEM_TIMERS*)(USF_STATE->TLBLoadAddress + 4);
+    USF_STATE->Timers = (SYSTEM_TIMERS*)((uintptr_t)USF_STATE->Registers + 0x500);
+	USF_STATE->WaitMode = (uint32_t *)(USF_STATE->Timers + sizeof(SYSTEM_TIMERS));
+	USF_STATE->CPU_Action = (CPU_ACTION *)(USF_STATE->WaitMode + 4);
+	//USF_STATE->RSP_GPR = (struct RSP_GPR_TYPE *)(USF_STATE->CPU_Action + sizeof(CPU_ACTION));
+	//USF_STATE->DMEM = (uint8_t *)(USF_STATE->RSP_GPR + (32 * 16));
+    USF_STATE->DMEM = (uint8_t *)(USF_STATE->CPU_Action + sizeof(CPU_ACTION));
+	//state->RSP_ACCUM = (struct RSP_ACCUM_TYPE *)(USF_STATE->DMEM + 0x2000);
 
+	USF_STATE->RDRAM = (uint8_t *)(USF_STATE->N64MEM);
+	USF_STATE->IMEM  = USF_STATE->DMEM + 0x1000;
 
-	RDRAM = (uint8_t *)(N64MEM);
-	IMEM  = DMEM + 0x1000;
-
-	MemoryState = 1;
+	USF_STATE->MemoryState = 1;
 
 	return 1;
 }
 
-int PreAllocate_Memory(void) {
+int PreAllocate_Memory(usf_state_t * state) {
 	int i = 0;
 	
 	// Moved the savestate allocation here :)  (for better management later)
-	savestatespace = malloc(0x80275C);
+	state->savestatespace = malloc(0x80275C);
 	
-	if(savestatespace == 0)
+	if(state->savestatespace == 0)
 		return 0;
 	
-	memset(savestatespace, 0, 0x80275C);
+	memset(state->savestatespace, 0, 0x80275C);
 	
 	for (i = 0; i < 0x400; i++) {
-		ROMPages[i] = 0;
+		state->ROMPages[i] = 0;
 	}
 
 	return 1;
 }
 
-void Release_Memory ( void ) {
+void Release_Memory ( usf_state_t * state ) {
 	uint32_t i;
 
 	for (i = 0; i < 0x400; i++) {
-		if (ROMPages[i]) {
-			free(ROMPages[i]); ROMPages[i] = 0;
+		if (state->ROMPages[i]) {
+			free(state->ROMPages[i]); state->ROMPages[i] = 0;
 		}
 	}
 	//printf("Freeing memory\n");
 
-	MemoryState = 0;
+	state->MemoryState = 0;
 
-	if (MemChunk != 0) {munmap(MemChunk, 0x100000 * sizeof(uintptr_t)) + 0x1D000 + RdramSize; MemChunk=0;}
-	if (N64MEM != 0) {munmap(N64MEM, RdramSize); N64MEM=0;}
-	if (NOMEM != 0) {munmap(NOMEM, 0xD000); NOMEM=0;}
-
-	if(savestatespace)
-		free(savestatespace);
-	savestatespace = NULL;
-
+    if (state->MemChunk != 0) {munmap(state->MemChunk, 0x100000 * sizeof(uintptr_t) + 0x10000); state->MemChunk=0;}
+    if (state->N64MEM != 0) {munmap(state->N64MEM, state->RdramSize); state->N64MEM=0;}
+    if (state->NOMEM != 0) {munmap(state->NOMEM, 0xD000); state->NOMEM=0;}
+	
+    if(state->savestatespace)
+		free(state->savestatespace);
+	state->savestatespace = NULL;
 }
 
 
-int32_t r4300i_LB_NonMemory ( uint32_t PAddr, uint32_t * Value, uint32_t SignExtend ) {
+int32_t r4300i_LB_NonMemory ( usf_state_t * state, uint32_t PAddr, uint32_t * Value, uint32_t SignExtend ) {
 	if (PAddr >= 0x10000000 && PAddr < 0x16000000) {
-		if (WrittenToRom) { return 0; }
+		if (state->WrittenToRom) { return 0; }
 		if ((PAddr & 2) == 0) { PAddr = (PAddr + 4) ^ 2; }
-		if ((PAddr - 0x10000000) < RomFileSize) {
+		if ((PAddr - 0x10000000) < state->RomFileSize) {
 			if (SignExtend) {
-				*Value = (char)*PageROM((PAddr - 0x10000000)^3);
+				*Value = (char)*PageROM(state, (PAddr - 0x10000000)^3);
 
 			} else {
-				*Value = *PageROM((PAddr - 0x10000000)^3);
+				*Value = *PageROM(state, (PAddr - 0x10000000)^3);
 			}
 			return 1;
 		} else {
@@ -188,20 +161,20 @@ int32_t r4300i_LB_NonMemory ( uint32_t PAddr, uint32_t * Value, uint32_t SignExt
 	return 1;
 }
 
-uint32_t r4300i_LB_VAddr ( uint32_t VAddr, uint8_t * Value ) {
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
-	*Value = *(uint8_t *)(TLB_Map[VAddr >> 12] + (VAddr ^ 3));
+uint32_t r4300i_LB_VAddr ( usf_state_t * state, uint32_t VAddr, uint8_t * Value ) {
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
+	*Value = *(uint8_t *)(state->TLB_Map[VAddr >> 12] + (VAddr ^ 3));
 	return 1;
 }
 
-uint32_t r4300i_LD_VAddr ( uint32_t VAddr, uint64_t * Value ) {
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
-	*((uint32_t *)(Value) + 1) = *(uint32_t *)(TLB_Map[VAddr >> 12] + VAddr);
-	*((uint32_t *)(Value)) = *(uint32_t *)(TLB_Map[VAddr >> 12] + VAddr + 4);
+uint32_t r4300i_LD_VAddr ( usf_state_t * state, uint32_t VAddr, uint64_t * Value ) {
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
+	*((uint32_t *)(Value) + 1) = *(uint32_t *)(state->TLB_Map[VAddr >> 12] + VAddr);
+	*((uint32_t *)(Value)) = *(uint32_t *)(state->TLB_Map[VAddr >> 12] + VAddr + 4);
 	return 1;
 }
 
-int32_t r4300i_LH_NonMemory ( uint32_t PAddr, uint32_t * Value, int32_t SignExtend ) {
+int32_t r4300i_LH_NonMemory ( usf_state_t * state, uint32_t PAddr, uint32_t * Value, int32_t SignExtend ) {
 	switch (PAddr & 0xFFF00000) {
 	default:
 		* Value = 0;
@@ -211,22 +184,22 @@ int32_t r4300i_LH_NonMemory ( uint32_t PAddr, uint32_t * Value, int32_t SignExte
 	return 1;
 }
 
-uint32_t r4300i_LH_VAddr ( uint32_t VAddr, uint16_t * Value ) {
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
-	*Value = *(uint16_t *)(TLB_Map[VAddr >> 12] + (VAddr ^ 2));
+uint32_t r4300i_LH_VAddr ( usf_state_t * state, uint32_t VAddr, uint16_t * Value ) {
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
+	*Value = *(uint16_t *)(state->TLB_Map[VAddr >> 12] + (VAddr ^ 2));
 	return 1;
 }
 
-int32_t r4300i_LW_NonMemory ( uint32_t PAddr, uint32_t * Value ) {
+int32_t r4300i_LW_NonMemory ( usf_state_t * state, uint32_t PAddr, uint32_t * Value ) {
 	if (PAddr >= 0x10000000 && PAddr < 0x16000000) {
-		if (WrittenToRom) {
-			*Value = WroteToRom;
+		if (state->WrittenToRom) {
+			*Value = state->WroteToRom;
 			//LogMessage("%X: Read crap from Rom %X from %X",PROGRAM_COUNTER,*Value,PAddr);
-			WrittenToRom = 0;
+			state->WrittenToRom = 0;
 			return 1;
 		}
-		if ((PAddr - 0x10000000) < RomFileSize) {
-			*Value = *(uint32_t *)PageROM((PAddr - 0x10000000));
+		if ((PAddr - 0x10000000) < state->RomFileSize) {
+			*Value = *(uint32_t *)PageROM(state, (PAddr - 0x10000000));
 			return 1;
 		} else {
 			*Value = PAddr & 0xFFFF;
@@ -312,7 +285,7 @@ int32_t r4300i_LW_NonMemory ( uint32_t PAddr, uint32_t * Value ) {
 		break;
 	case 0x04500000:
 		switch (PAddr) {
-		case 0x04500004: *Value = AiReadLength(); break;
+		case 0x04500004: *Value = AiReadLength(state); break;
 		case 0x0450000C: *Value = AI_STATUS_REG; break;
 		default:
 			* Value = 0;
@@ -374,24 +347,24 @@ int32_t r4300i_LW_NonMemory ( uint32_t PAddr, uint32_t * Value ) {
 	return 1;
 }
 
-void r4300i_LW_PAddr ( uint32_t PAddr, uint32_t * Value ) {
-	*Value = *(uint32_t *)(N64MEM+PAddr);
+void r4300i_LW_PAddr ( usf_state_t * state, uint32_t PAddr, uint32_t * Value ) {
+	*Value = *(uint32_t *)(state->N64MEM+PAddr);
 }
 
-uint32_t r4300i_LW_VAddr ( uint32_t VAddr, uint32_t * Value ) {
-	uintptr_t address = (TLB_Map[VAddr >> 12] + VAddr);
+uint32_t r4300i_LW_VAddr ( usf_state_t * state, uint32_t VAddr, uint32_t * Value ) {
+	uintptr_t address = (state->TLB_Map[VAddr >> 12] + VAddr);
 
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
 
-	if((address - (uintptr_t)RDRAM) > RdramSize) {
-		address = address - (uintptr_t)RDRAM;
-		return r4300i_LW_NonMemory(address, Value);
+	if((address - (uintptr_t)state->RDRAM) > state->RdramSize) {
+		address = address - (uintptr_t)state->RDRAM;
+		return r4300i_LW_NonMemory(state, address, Value);
 	}
 	*Value = *(uint32_t *)address;
 	return 1;
 }
 
-int32_t r4300i_SB_NonMemory ( uint32_t PAddr, uint8_t Value ) {
+int32_t r4300i_SB_NonMemory ( usf_state_t * state, uint32_t PAddr, uint8_t Value ) {
 	switch (PAddr & 0xFFF00000) {
 	case 0x00000000:
 	case 0x00100000:
@@ -401,8 +374,8 @@ int32_t r4300i_SB_NonMemory ( uint32_t PAddr, uint8_t Value ) {
 	case 0x00500000:
 	case 0x00600000:
 	case 0x00700000:
-		if (PAddr < RdramSize) {
-			*(uint8_t *)(N64MEM+PAddr) = Value;
+		if (PAddr < state->RdramSize) {
+			*(uint8_t *)(state->N64MEM+PAddr) = Value;
 		}
 		break;
 	default:
@@ -412,14 +385,14 @@ int32_t r4300i_SB_NonMemory ( uint32_t PAddr, uint8_t Value ) {
 	return 1;
 }
 
-uint32_t r4300i_SB_VAddr ( uint32_t VAddr, uint8_t Value ) {
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
-	*(uint8_t *)(TLB_Map[VAddr >> 12] + (VAddr ^ 3)) = Value;
+uint32_t r4300i_SB_VAddr ( usf_state_t * state, uint32_t VAddr, uint8_t Value ) {
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
+	*(uint8_t *)(state->TLB_Map[VAddr >> 12] + (VAddr ^ 3)) = Value;
 
 	return 1;
 }
 
-int32_t r4300i_SH_NonMemory ( uint32_t PAddr, uint16_t Value ) {
+int32_t r4300i_SH_NonMemory ( usf_state_t * state, uint32_t PAddr, uint16_t Value ) {
 	switch (PAddr & 0xFFF00000) {
 	case 0x00000000:
 	case 0x00100000:
@@ -429,8 +402,8 @@ int32_t r4300i_SH_NonMemory ( uint32_t PAddr, uint16_t Value ) {
 	case 0x00500000:
 	case 0x00600000:
 	case 0x00700000:
-		if (PAddr < RdramSize) {
-			*(uint16_t *)(N64MEM+PAddr) = Value;
+		if (PAddr < state->RdramSize) {
+			*(uint16_t *)(state->N64MEM+PAddr) = Value;
 		}
 		break;
 	default:
@@ -440,24 +413,24 @@ int32_t r4300i_SH_NonMemory ( uint32_t PAddr, uint16_t Value ) {
 	return 1;
 }
 
-uint32_t r4300i_SD_VAddr ( uint32_t VAddr, uint64_t Value ) {
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
-	*(uint32_t *)(TLB_Map[VAddr >> 12] + VAddr) = *((uint32_t *)(&Value) + 1);
-	*(uint32_t *)(TLB_Map[VAddr >> 12] + VAddr + 4) = *((uint32_t *)(&Value));
+uint32_t r4300i_SD_VAddr ( usf_state_t * state, uint32_t VAddr, uint64_t Value ) {
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
+	*(uint32_t *)(state->TLB_Map[VAddr >> 12] + VAddr) = *((uint32_t *)(&Value) + 1);
+	*(uint32_t *)(state->TLB_Map[VAddr >> 12] + VAddr + 4) = *((uint32_t *)(&Value));
 	return 1;
 }
 
-uint32_t r4300i_SH_VAddr ( uint32_t VAddr, uint16_t Value ) {
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
-	*(uint16_t *)(TLB_Map[VAddr >> 12] + (VAddr ^ 2)) = Value;
+uint32_t r4300i_SH_VAddr ( usf_state_t * state, uint32_t VAddr, uint16_t Value ) {
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
+	*(uint16_t *)(state->TLB_Map[VAddr >> 12] + (VAddr ^ 2)) = Value;
 	return 1;
 }
 
-int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
+int32_t r4300i_SW_NonMemory ( usf_state_t * state, uint32_t PAddr, uint32_t Value ) {
 	if (PAddr >= 0x10000000 && PAddr < 0x16000000) {
-		if ((PAddr - 0x10000000) < RomFileSize) {
-			WrittenToRom = 1;
-			WroteToRom = Value;
+		if ((PAddr - 0x10000000) < state->RomFileSize) {
+			state->WrittenToRom = 1;
+			state->WroteToRom = Value;
 		} else {
 			return 0;
 		}
@@ -472,8 +445,8 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 	case 0x00500000:
 	case 0x00600000:
 	case 0x00700000:
-		if (PAddr < RdramSize) {
-			*(uint32_t *)(N64MEM+PAddr) = Value;
+		if (PAddr < state->RdramSize) {
+			*(uint32_t *)(state->N64MEM+PAddr) = Value;
 		}
 		break;
 	case 0x03F00000:
@@ -500,7 +473,7 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		break;
 	case 0x04000000:
 		if (PAddr < 0x04002000) {
-			*(uint32_t *)(N64MEM+PAddr) = Value;
+			*(uint32_t *)(state->N64MEM+PAddr) = Value;
 			return 1;
 		}
 		switch (PAddr) {
@@ -508,11 +481,11 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		case 0x04040004: SP_DRAM_ADDR_REG = Value; break;
 		case 0x04040008:
 			SP_RD_LEN_REG = Value;
-			SP_DMA_READ();
+			SP_DMA_READ(state);
 			break;
 		case 0x0404000C:
 			SP_WR_LEN_REG = Value;
-			SP_DMA_WRITE();
+			SP_DMA_WRITE(state);
 			break;
 		case 0x04040010:
 			if ( ( Value & SP_CLR_HALT ) != 0) { SP_STATUS_REG &= ~SP_STATUS_HALT; }
@@ -520,7 +493,7 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 			if ( ( Value & SP_CLR_BROKE ) != 0) { SP_STATUS_REG &= ~SP_STATUS_BROKE; }
 			if ( ( Value & SP_CLR_INTR ) != 0) {
 				MI_INTR_REG &= ~MI_INTR_SP;
-				CheckInterrupts();
+				CheckInterrupts(state);
 			}
 			if ( ( Value & SP_CLR_SSTEP ) != 0) { SP_STATUS_REG &= ~SP_STATUS_SSTEP; }
 			if ( ( Value & SP_SET_SSTEP ) != 0) { SP_STATUS_REG |= SP_STATUS_SSTEP;  }
@@ -543,7 +516,7 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 			if ( ( Value & SP_CLR_SIG7 ) != 0) { SP_STATUS_REG &= ~SP_STATUS_SIG7; }
 			if ( ( Value & SP_SET_SIG7 ) != 0) { SP_STATUS_REG |= SP_STATUS_SIG7;  }
 
-			RunRsp();
+			RunRsp(state);
 
 			break;
 		case 0x0404001C: SP_SEMAPHORE_REG = 0; break;
@@ -560,7 +533,6 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 			break;
 		case 0x04100004:
 			DPC_END_REG = Value;
-			//if (ProcessRDPList) { ProcessRDPList(); }
 			break;
 		case 0x04100008: DPC_CURRENT_REG = Value; break;
 		case 0x0410000C:
@@ -576,7 +548,7 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 				{
 					if ( ( SP_STATUS_REG & SP_STATUS_BROKE ) == 0 )
 					{
-						RunRsp();
+						RunRsp(state);
 					}
 				}
 			}
@@ -596,7 +568,7 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 			if ( ( Value & MI_SET_EBUS ) != 0 ) { MI_MODE_REG |= MI_MODE_EBUS; }
 			if ( ( Value & MI_CLR_DP_INTR ) != 0 ) {
 				MI_INTR_REG &= ~MI_INTR_DP;
-				CheckInterrupts();
+				CheckInterrupts(state);
 			}
 			if ( ( Value & MI_CLR_RDRAM ) != 0 ) { MI_MODE_REG &= ~MI_MODE_RDRAM; }
 			if ( ( Value & MI_SET_RDRAM ) != 0 ) { MI_MODE_REG |= MI_MODE_RDRAM; }
@@ -641,7 +613,7 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		case 0x0440000C: VI_INTR_REG = Value; break;
 		case 0x04400010:
 			MI_INTR_REG &= ~MI_INTR_VI;
-			CheckInterrupts();
+			CheckInterrupts(state);
 			break;
 		case 0x04400014: VI_BURST_REG = Value; break;
 		case 0x04400018: VI_V_SYNC_REG = Value; break;
@@ -661,14 +633,14 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		case 0x04500000: AI_DRAM_ADDR_REG = Value; break;
 		case 0x04500004:
 			AI_LEN_REG = Value;
-			if (AiLenChanged != NULL) { AiLenChanged(); }
+			AiLenChanged(state);
 			break;
 		case 0x04500008: AI_CONTROL_REG = (Value & 0x1); break;
 		case 0x0450000C:
 			/* Clear Interrupt */;
 			MI_INTR_REG &= ~MI_INTR_AI;
-			AudioIntrReg &= ~MI_INTR_AI;
-			CheckInterrupts();
+			state->AudioIntrReg &= ~MI_INTR_AI;
+			CheckInterrupts(state);
 			break;
 		case 0x04500010:
 			AI_DACRATE_REG = Value;
@@ -685,17 +657,17 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		case 0x04600004: PI_CART_ADDR_REG = Value; break;
 		case 0x04600008:
 			PI_RD_LEN_REG = Value;
-			PI_DMA_READ();
+			PI_DMA_READ(state);
 			break;
 		case 0x0460000C:
 			PI_WR_LEN_REG = Value;
-			PI_DMA_WRITE();
+			PI_DMA_WRITE(state);
 			break;
 		case 0x04600010:
 			//if ((Value & PI_SET_RESET) != 0 ) { DisplayError("reset Controller"); }
 			if ((Value & PI_CLR_INTR) != 0 ) {
 				MI_INTR_REG &= ~MI_INTR_PI;
-				CheckInterrupts();
+				CheckInterrupts(state);
 			}
 			break;
 		case 0x04600014: PI_DOMAIN1_REG = (Value & 0xFF); break;
@@ -725,16 +697,16 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		case 0x04800000: SI_DRAM_ADDR_REG = Value; break;
 		case 0x04800004:
 			SI_PIF_ADDR_RD64B_REG = Value;
-			SI_DMA_READ ();
+			SI_DMA_READ (state);
 			break;
 		case 0x04800010:
 			SI_PIF_ADDR_WR64B_REG = Value;
-			SI_DMA_WRITE();
+			SI_DMA_WRITE(state);
 			break;
 		case 0x04800018:
 			MI_INTR_REG &= ~MI_INTR_SI;
 			SI_STATUS_REG &= ~SI_STATUS_INTERRUPT;
-			CheckInterrupts();
+			CheckInterrupts(state);
 			break;
 		default:
 			return 0;
@@ -742,7 +714,6 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		break;
 	case 0x08000000:
 		if (PAddr != 0x08010000) { return 0; }
-		//WriteToFlashCommand(Value);
 		break;
 	case 0x1FC00000:
 		if (PAddr < 0x1FC007C0) {
@@ -750,7 +721,7 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 		} else if (PAddr < 0x1FC00800) {
 
 			if (PAddr == 0x1FC007FC) {
-				PifRamWrite();
+				PifRamWrite(state);
 			}
 			return 1;
 		}
@@ -763,14 +734,14 @@ int32_t r4300i_SW_NonMemory ( uint32_t PAddr, uint32_t Value ) {
 	return 1;
 }
 
-uint32_t r4300i_SW_VAddr ( uint32_t VAddr, uint32_t Value ) {
-	uintptr_t address = (TLB_Map[VAddr >> 12] + VAddr);
+uint32_t r4300i_SW_VAddr ( usf_state_t * state, uint32_t VAddr, uint32_t Value ) {
+	uintptr_t address = (state->TLB_Map[VAddr >> 12] + VAddr);
 
-	if (TLB_Map[VAddr >> 12] == 0) { return 0; }
+	if (state->TLB_Map[VAddr >> 12] == 0) { return 0; }
 
-	if((address - (uintptr_t)RDRAM) > RdramSize) {
-		address = address - (uintptr_t)RDRAM;
-		return r4300i_SW_NonMemory(address, Value);
+	if((address - (uintptr_t)state->RDRAM) > state->RdramSize) {
+		address = address - (uintptr_t)state->RDRAM;
+		return r4300i_SW_NonMemory(state, address, Value);
 	}
 	*(uint32_t *)address = Value;
 	return 1;

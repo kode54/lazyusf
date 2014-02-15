@@ -25,7 +25,5 @@
  */
 extern uint8_t *PIF_Ram;
 
-int32_t  GetCicChipID ( int8_t * RomData );
-int32_t  LoadPifRom   ( int32_t country );
-void PifRamWrite  ( void );
-void PifRamRead   ( void );
+void PifRamWrite  ( usf_state_t * );
+void PifRamRead   ( usf_state_t * );

@@ -14,13 +14,13 @@
 #include "vu.h"
 #include "divrom.h"
 
-static void VRCPL(int vd, int de, int vt, int e)
+static void VRCPL(usf_state_t * state, int vd, int de, int vt, int e)
 {
-    DivIn &= -DPH;
-    DivIn |= (unsigned short)VR[vt][e & 07];
-    do_div(DivIn, SP_DIV_SQRT_NO, DPH);
-    SHUFFLE_VECTOR(VACC_L, VR[vt], e);
-    VR[vd][de &= 07] = (short)DivOut;
-    DPH = SP_DIV_PRECISION_SINGLE;
+    state->DivIn &= -state->DPH;
+    state->DivIn |= (unsigned short)state->VR[vt][e & 07];
+    do_div(state, state->DivIn, SP_DIV_SQRT_NO, state->DPH);
+    SHUFFLE_VECTOR(VACC_L, state->VR[vt], e);
+    state->VR[vd][de &= 07] = (short)state->DivOut;
+    state->DPH = SP_DIV_PRECISION_SINGLE;
     return;
 }

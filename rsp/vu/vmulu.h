@@ -25,7 +25,7 @@
 #define SEMIFRAC    (VS[i]*VT[i]*2/2 + 0x8000/2)
 #endif
 
-INLINE static void do_mulu(short* VD, short* VS, short* VT)
+INLINE static void do_mulu(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     register int i;
 
@@ -36,7 +36,7 @@ INLINE static void do_mulu(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         VACC_H[i] = -((VACC_M[i] < 0) & (VS[i] != VT[i])); /* -32768 * -32768 */
 #if (0)
-    UNSIGNED_CLAMP(VD);
+    UNSIGNED_CLAMP(state, VD);
 #else
     vector_copy(VD, VACC_M);
     for (i = 0; i < N; i++)
@@ -47,11 +47,11 @@ INLINE static void do_mulu(short* VD, short* VS, short* VT)
     return;
 }
 
-static void VMULU(int vd, int vs, int vt, int e)
+static void VMULU(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_mulu(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_mulu(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

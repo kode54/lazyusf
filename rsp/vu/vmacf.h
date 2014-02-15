@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_macf(short* VD, short* VS, short* VT)
+INLINE static void do_macf(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     int32_t product[N];
     uint32_t addend[N];
@@ -37,15 +37,15 @@ INLINE static void do_macf(short* VD, short* VS, short* VT)
         VACC_H[i] -= (product[i] < 0);
     for (i = 0; i < N; i++)
         VACC_H[i] += addend[i] >> 16;
-    SIGNED_CLAMP_AM(VD);
+    SIGNED_CLAMP_AM(state, VD);
     return;
 }
 
-static void VMACF(int vd, int vs, int vt, int e)
+static void VMACF(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_macf(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_macf(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

@@ -46,7 +46,7 @@ static void VSAR(int vd, int vs, int vt, int e)
 }
 #endif
 
-static void VSAW(int vd, int vs, int vt, int e)
+static void VSAW(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     register int i;
 
@@ -60,9 +60,9 @@ static void VSAW(int vd, int vs, int vt, int e)
     { /* branch very unlikely...never seen a game do VSAW illegally */
         message("VSAW\nIllegal mask.", 2);
         for (i = 0; i < N; i++)
-            VR[vd][i] = 0x0000; /* override behavior (zilmar) */
+            state->VR[vd][i] = 0x0000; /* override behavior (zilmar) */
         return;
     }
-    vector_copy(VR[vd], VACC[e]);
+    vector_copy(state->VR[vd], state->VACC[e]);
     return;
 }

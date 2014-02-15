@@ -5,9 +5,8 @@
 #include "cpu.h"
 #include "memory.h"
 
-uint32_t AiReadLength(void);
-void AiLenChanged(void);
-void AiDacrateChanged(uint32_t value);
-void OpenSound(void);
+uint32_t AiReadLength(usf_state_t *);
+void AiLenChanged(usf_state_t *);
+void AiDacrateChanged(usf_state_t *, uint32_t value);
 
 #endif

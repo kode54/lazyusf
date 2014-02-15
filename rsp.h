@@ -1,8 +1,11 @@
 #ifndef RSP_H
 #define RSP_H
 
-void real_run_rsp(uint32_t cycles);
+#include "usf.h"
+#include "usf_internal.h"
 
-int32_t init_rsp(void);
+void real_run_rsp(usf_state_t *, uint32_t cycles);
+
+int32_t init_rsp(usf_state_t *);
 
 #endif

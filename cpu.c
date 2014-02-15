@@ -32,92 +32,86 @@
 #include "registers.h"
 #include "rsp.h"
 
+#include "usf_internal.h"
+
 #include <stdlib.h>
 
-uint32_t NextInstruction = 0, JumpToLocation = 0, AudioIntrReg = 0;
-CPU_ACTION * CPU_Action = 0;
-SYSTEM_TIMERS * Timers = 0;
-OPCODE Opcode;
-uint32_t CPURunning = 0, SPHack = 0;
-uint32_t * WaitMode = 0;
-
-
-void ChangeCompareTimer(void) {
+void ChangeCompareTimer(usf_state_t * state) {
 	uint32_t NextCompare = COMPARE_REGISTER - COUNT_REGISTER;
 	if ((NextCompare & 0x80000000) != 0) {  NextCompare = 0x7FFFFFFF; }
 	if (NextCompare == 0) { NextCompare = 0x1; }
-	ChangeTimer(CompareTimer,NextCompare);
+	ChangeTimer(state,CompareTimer,NextCompare);
 }
 
-void ChangeTimer(int32_t Type, int32_t Value) {
+void ChangeTimer(usf_state_t * state, int32_t Type, int32_t Value) {
 	if (Value == 0) {
-		Timers->NextTimer[Type] = 0;
-		Timers->Active[Type] = 0;
+		state->Timers->NextTimer[Type] = 0;
+		state->Timers->Active[Type] = 0;
 		return;
 	}
-	Timers->NextTimer[Type] = Value - Timers->Timer;
-	Timers->Active[Type] = 1;
-	CheckTimer();
+	state->Timers->NextTimer[Type] = Value - state->Timers->Timer;
+	state->Timers->Active[Type] = 1;
+	CheckTimer(state);
 }
 
-void CheckTimer (void) {
+void CheckTimer (usf_state_t * state) {
 	int32_t count;
 
 	for (count = 0; count < MaxTimers; count++) {
-		if (!Timers->Active[count]) { continue; }
-		if (!(count == CompareTimer && Timers->NextTimer[count] == 0x7FFFFFFF)) {
-			Timers->NextTimer[count] += Timers->Timer;
+		if (!state->Timers->Active[count]) { continue; }
+		if (!(count == CompareTimer && state->Timers->NextTimer[count] == 0x7FFFFFFF)) {
+			state->Timers->NextTimer[count] += state->Timers->Timer;
 		}
 	}
-	Timers->CurrentTimerType = -1;
-	Timers->Timer = 0x7FFFFFFF;
+	state->Timers->CurrentTimerType = -1;
+	state->Timers->Timer = 0x7FFFFFFF;
 	for (count = 0; count < MaxTimers; count++) {
-		if (!Timers->Active[count]) { continue; }
-		if (Timers->NextTimer[count] >= Timers->Timer) { continue; }
-		Timers->Timer = Timers->NextTimer[count];
-		Timers->CurrentTimerType = count;
+		if (!state->Timers->Active[count]) { continue; }
+		if (state->Timers->NextTimer[count] >= state->Timers->Timer) { continue; }
+		state->Timers->Timer = state->Timers->NextTimer[count];
+		state->Timers->CurrentTimerType = count;
 	}
-	if (Timers->CurrentTimerType == -1) {
+	if (state->Timers->CurrentTimerType == -1) {
 		DisplayError("No active timers ???\nEmulation Stoped");
-		StopEmulation();
+		StopEmulation(state);
 	}
 	for (count = 0; count < MaxTimers; count++) {
-		if (!Timers->Active[count]) { continue; }
-		if (!(count == CompareTimer && Timers->NextTimer[count] == 0x7FFFFFFF)) {
-			Timers->NextTimer[count] -= Timers->Timer;
+		if (!state->Timers->Active[count]) { continue; }
+		if (!(count == CompareTimer && state->Timers->NextTimer[count] == 0x7FFFFFFF)) {
+			state->Timers->NextTimer[count] -= state->Timers->Timer;
 		}
 	}
 
-	if (Timers->NextTimer[CompareTimer] == 0x7FFFFFFF) {
+	if (state->Timers->NextTimer[CompareTimer] == 0x7FFFFFFF) {
 		uint32_t NextCompare = COMPARE_REGISTER - COUNT_REGISTER;
 		if ((NextCompare & 0x80000000) == 0 && NextCompare != 0x7FFFFFFF) {
-			ChangeCompareTimer();
+			ChangeCompareTimer(state);
 		}
 	}
 }
 
 
 
-void CloseCpu (void) {
+void CloseCpu (usf_state_t * state) {
 	uint32_t count = 0;
 
-	if(!MemChunk) return;
-	if (!cpu_running) { return; }
+	if(!state->MemChunk) return;
+	if (!state->cpu_running) { return; }
 
-	cpu_running = 0;
+	state->cpu_running = 0;
 
 	for (count = 0; count < 3; count ++ ) {
-		CPU_Action->CloseCPU = 1;
-		CPU_Action->DoSomething = 1;
+		state->CPU_Action->CloseCPU = 1;
+		state->CPU_Action->DoSomething = 1;
 	}
 
-	CPURunning = 0;
+	state->CPURunning = 0;
 }
 
-int32_t DelaySlotEffectsCompare (uint32_t PC, uint32_t Reg1, uint32_t Reg2) {
+int32_t DelaySlotEffectsCompare (usf_state_t * state, uint32_t PC, uint32_t Reg1, uint32_t Reg2) {
 	OPCODE Command;
 
-	if (!r4300i_LW_VAddr(PC + 4, (uint32_t*)&Command.Hex)) {
+	if (!r4300i_LW_VAddr(state, PC + 4, (uint32_t*)&Command.Hex)) {
 		return 1;
 	}
 
@@ -184,7 +178,7 @@ int32_t DelaySlotEffectsCompare (uint32_t PC, uint32_t Reg1, uint32_t Reg2) {
 			break;
 		default:
 			if ( (Command.rs & 0x10 ) != 0 ) {
-				switch( Opcode.funct ) {
+				switch( state->Opcode.funct ) {
 				case R4300i_COP0_CO_TLBR: break;
 				case R4300i_COP0_CO_TLBWI: break;
 				case R4300i_COP0_CO_TLBWR: break;
@@ -255,16 +249,16 @@ int32_t DelaySlotEffectsCompare (uint32_t PC, uint32_t Reg1, uint32_t Reg2) {
 	return 0;
 }
 
-int32_t DelaySlotEffectsJump (uint32_t JumpPC) {
+int32_t DelaySlotEffectsJump (usf_state_t * state, uint32_t JumpPC) {
 	OPCODE Command;
 
-	if (!r4300i_LW_VAddr(JumpPC, &Command.Hex)) { return 1; }
+	if (!r4300i_LW_VAddr(state, JumpPC, &Command.Hex)) { return 1; }
 
 	switch (Command.op) {
 	case R4300i_SPECIAL:
 		switch (Command.funct) {
-		case R4300i_SPECIAL_JR:	return DelaySlotEffectsCompare(JumpPC,Command.rs,0);
-		case R4300i_SPECIAL_JALR: return DelaySlotEffectsCompare(JumpPC,Command.rs,31);
+		case R4300i_SPECIAL_JR:	return DelaySlotEffectsCompare(state,JumpPC,Command.rs,0);
+		case R4300i_SPECIAL_JALR: return DelaySlotEffectsCompare(state,JumpPC,Command.rs,31);
 		}
 		break;
 	case R4300i_REGIMM:
@@ -275,17 +269,17 @@ int32_t DelaySlotEffectsJump (uint32_t JumpPC) {
 		case R4300i_REGIMM_BGEZL:
 		case R4300i_REGIMM_BLTZAL:
 		case R4300i_REGIMM_BGEZAL:
-			return DelaySlotEffectsCompare(JumpPC,Command.rs,0);
+			return DelaySlotEffectsCompare(state,JumpPC,Command.rs,0);
 		}
 		break;
 	case R4300i_JAL:
-	case R4300i_SPECIAL_JALR: return DelaySlotEffectsCompare(JumpPC,31,0); break;
+	case R4300i_SPECIAL_JALR: return DelaySlotEffectsCompare(state,JumpPC,31,0); break;
 	case R4300i_J: return 0;
 	case R4300i_BEQ:
 	case R4300i_BNE:
 	case R4300i_BLEZ:
 	case R4300i_BGTZ:
-		return DelaySlotEffectsCompare(JumpPC,Command.rs,Command.rt);
+		return DelaySlotEffectsCompare(state,JumpPC,Command.rs,Command.rt);
 	case R4300i_CP1:
 		switch (Command.fmt) {
 		case R4300i_COP1_BC:
@@ -298,7 +292,7 @@ int32_t DelaySlotEffectsJump (uint32_t JumpPC) {
 					int32_t EffectDelaySlot;
 					OPCODE NewCommand;
 
-					if (!r4300i_LW_VAddr(JumpPC + 4, &NewCommand.Hex)) { return 1; }
+					if (!r4300i_LW_VAddr(state, JumpPC + 4, &NewCommand.Hex)) { return 1; }
 
 					EffectDelaySlot = 0;
 					if (NewCommand.op == R4300i_CP1) {
@@ -320,35 +314,35 @@ int32_t DelaySlotEffectsJump (uint32_t JumpPC) {
 	case R4300i_BNEL:
 	case R4300i_BLEZL:
 	case R4300i_BGTZL:
-		return DelaySlotEffectsCompare(JumpPC,Command.rs,Command.rt);
+		return DelaySlotEffectsCompare(state,JumpPC,Command.rs,Command.rt);
 	}
 	return 1;
 }
 
-void DoSomething ( void ) {
-	if (CPU_Action->CloseCPU) {
+void DoSomething ( usf_state_t * state ) {
+	if (state->CPU_Action->CloseCPU) {
 		//StopEmulation();
-		cpu_running = 0;
+		state->cpu_running = 0;
 		//printf("Stopping?\n");
 	}
-	if (CPU_Action->CheckInterrupts) {
-		CPU_Action->CheckInterrupts = 0;
-		CheckInterrupts();
+	if (state->CPU_Action->CheckInterrupts) {
+		state->CPU_Action->CheckInterrupts = 0;
+		CheckInterrupts(state);
 	}
-	if (CPU_Action->DoInterrupt) {
-		CPU_Action->DoInterrupt = 0;
-		DoIntrException(0);
+	if (state->CPU_Action->DoInterrupt) {
+		state->CPU_Action->DoInterrupt = 0;
+		DoIntrException(state, 0);
 	}
 
 
-	CPU_Action->DoSomething = 0;
+	state->CPU_Action->DoSomething = 0;
 
-	if (CPU_Action->DoInterrupt) { CPU_Action->DoSomething = 1; }
+	if (state->CPU_Action->DoInterrupt) { state->CPU_Action->DoSomething = 1; }
 }
 
-void InPermLoop (void) {
+void InPermLoop ( usf_state_t * state ) {
 	// *** Changed ***/
-	if (CPU_Action->DoInterrupt) { return; }
+	if (state->CPU_Action->DoInterrupt) { return; }
 
 	/* Interrupts enabled */
 	if (( STATUS_REGISTER & STATUS_IE  ) == 0 ) { goto InterruptsDisabled; }
@@ -360,15 +354,15 @@ void InPermLoop (void) {
 
 	/* check RSP running */
 	/* check RDP running */
-	if (Timers->Timer >= 0) {
-		COUNT_REGISTER += Timers->Timer + 1;
-		Timers->Timer = -1;
+	if (state->Timers->Timer >= 0) {
+		COUNT_REGISTER += state->Timers->Timer + 1;
+		state->Timers->Timer = -1;
 	}
 	return;
 
 InterruptsDisabled:
 	DisplayError("Stuck in Permanent Loop");
-	StopEmulation();
+	StopEmulation(state);
 }
 
 void ReadFromMem(const void * source, void * target, uint32_t length, uint32_t *offset) {
@@ -377,7 +371,7 @@ void ReadFromMem(const void * source, void * target, uint32_t length, uint32_t *
 }
 
 
-uint32_t Machine_LoadStateFromRAM(void * savestatespace) {
+uint32_t Machine_LoadStateFromRAM(usf_state_t * state, void * savestatespace) {
 	uint8_t LoadHeader[0x40];
 	uint32_t Value, count, SaveRDRAMSize, offset=0;
 
@@ -386,123 +380,115 @@ uint32_t Machine_LoadStateFromRAM(void * savestatespace) {
 	ReadFromMem( savestatespace,&SaveRDRAMSize,sizeof(SaveRDRAMSize),&offset);
 	ReadFromMem( savestatespace,&LoadHeader,0x40,&offset);
 
-	Timers->CurrentTimerType = -1;
-	Timers->Timer = 0;
-	for (count = 0; count < MaxTimers; count ++) { Timers->Active[count] = 0; }
+	state->Timers->CurrentTimerType = -1;
+	state->Timers->Timer = 0;
+	for (count = 0; count < MaxTimers; count ++) { state->Timers->Active[count] = 0; }
 
 	//fix rdram size
-	if (SaveRDRAMSize != RdramSize) {
+	if (SaveRDRAMSize != state->RdramSize) {
 		// dothis :)
 	}		
 
-	RdramSize = SaveRDRAMSize;
+	state->RdramSize = SaveRDRAMSize;
 
 	ReadFromMem( savestatespace,&Value,sizeof(Value),&offset);
-	ChangeTimer(ViTimer,Value);
-	ReadFromMem( savestatespace,&PROGRAM_COUNTER,sizeof(PROGRAM_COUNTER),&offset);
-	ReadFromMem( savestatespace,GPR,sizeof(int64_t)*32,&offset);
-	ReadFromMem( savestatespace,FPR,sizeof(int64_t)*32,&offset);
-	ReadFromMem( savestatespace,CP0,sizeof(uint32_t)*32,&offset);
-	ReadFromMem( savestatespace,FPCR,sizeof(uint32_t)*32,&offset);
-	ReadFromMem( savestatespace,&HI,sizeof(int64_t),&offset);
-	ReadFromMem( savestatespace,&LO,sizeof(int64_t),&offset);
-	ReadFromMem( savestatespace,RegRDRAM,sizeof(uint32_t)*10,&offset);
-	ReadFromMem( savestatespace,RegSP,sizeof(uint32_t)*10,&offset);
-	ReadFromMem( savestatespace,RegDPC,sizeof(uint32_t)*10,&offset);
-	ReadFromMem( savestatespace,RegMI,sizeof(uint32_t)*4,&offset);
-	ReadFromMem( savestatespace,RegVI,sizeof(uint32_t)*14,&offset);
-	ReadFromMem( savestatespace,RegAI,sizeof(uint32_t)*6,&offset);
-	ReadFromMem( savestatespace,RegPI,sizeof(uint32_t)*13,&offset);
-	ReadFromMem( savestatespace,RegRI,sizeof(uint32_t)*8,&offset);
-	ReadFromMem( savestatespace,RegSI,sizeof(uint32_t)*4,&offset);
-	ReadFromMem( savestatespace,tlb,sizeof(TLB)*32,&offset);
-	ReadFromMem( savestatespace,(uint8_t*)PIF_Ram,0x40,&offset);
-	ReadFromMem( savestatespace,RDRAM,SaveRDRAMSize,&offset);
-	ReadFromMem( savestatespace,DMEM,0x1000,&offset);
-	ReadFromMem( savestatespace,IMEM,0x1000,&offset);
+	ChangeTimer(state,ViTimer,Value);
+	ReadFromMem( savestatespace,&state->PROGRAM_COUNTER,sizeof(state->PROGRAM_COUNTER),&offset);
+	ReadFromMem( savestatespace,state->GPR,sizeof(int64_t)*32,&offset);
+	ReadFromMem( savestatespace,state->FPR,sizeof(int64_t)*32,&offset);
+	ReadFromMem( savestatespace,state->CP0,sizeof(uint32_t)*32,&offset);
+	ReadFromMem( savestatespace,state->FPCR,sizeof(uint32_t)*32,&offset);
+	ReadFromMem( savestatespace,&state->HI,sizeof(int64_t),&offset);
+	ReadFromMem( savestatespace,&state->LO,sizeof(int64_t),&offset);
+	ReadFromMem( savestatespace,state->RegRDRAM,sizeof(uint32_t)*10,&offset);
+	ReadFromMem( savestatespace,state->RegSP,sizeof(uint32_t)*10,&offset);
+	ReadFromMem( savestatespace,state->RegDPC,sizeof(uint32_t)*10,&offset);
+	ReadFromMem( savestatespace,state->RegMI,sizeof(uint32_t)*4,&offset);
+	ReadFromMem( savestatespace,state->RegVI,sizeof(uint32_t)*14,&offset);
+	ReadFromMem( savestatespace,state->RegAI,sizeof(uint32_t)*6,&offset);
+	ReadFromMem( savestatespace,state->RegPI,sizeof(uint32_t)*13,&offset);
+	ReadFromMem( savestatespace,state->RegRI,sizeof(uint32_t)*8,&offset);
+	ReadFromMem( savestatespace,state->RegSI,sizeof(uint32_t)*4,&offset);
+	ReadFromMem( savestatespace,state->tlb,sizeof(TLB)*32,&offset);
+	ReadFromMem( savestatespace,(uint8_t*)state->PIF_Ram,0x40,&offset);
+	ReadFromMem( savestatespace,state->RDRAM,SaveRDRAMSize,&offset);
+	ReadFromMem( savestatespace,state->DMEM,0x1000,&offset);
+	ReadFromMem( savestatespace,state->IMEM,0x1000,&offset);
 
-	CP0[32] = 0;
+	state->CP0[32] = 0;
 
-	SetupTLB();
-	ChangeCompareTimer();
+	SetupTLB(state);
+	ChangeCompareTimer(state);
 	AI_STATUS_REG = 0;
-	AiDacrateChanged(AI_DACRATE_REG);
+	AiDacrateChanged(state, AI_DACRATE_REG);
 
-//	StartAiInterrupt();
+//	StartAiInterrupt(state);
 
-	SetFpuLocations(); // important if FR=1
+	SetFpuLocations(state); // important if FR=1
 
 	return 1;
 }
-extern int32_t SampleRate;
-void StartEmulationFromSave ( void * savestate ) {
+
+void StartEmulationFromSave ( usf_state_t * state, void * savestate ) {
 	uint32_t count = 0;
 	
 	//printf("Starting generic Cpu\n");
 
 	//CloseCpu();
-	memset(N64MEM, 0, RdramSize);	
+	memset(state->N64MEM, 0, state->RdramSize);
 	
-	memset(DMEM, 0, 0x1000);
-	memset(IMEM, 0, 0x1000);
-	memset(TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
+	memset(state->DMEM, 0, 0x1000);
+	memset(state->IMEM, 0, 0x1000);
+	memset(state->TLB_Map, 0, 0x100000 * sizeof(uintptr_t) + 0x10000);
 
-	memset(CPU_Action,0,sizeof(CPU_Action));
-	WrittenToRom = 0;
+	memset(state->CPU_Action,0,sizeof(state->CPU_Action));
+	state->WrittenToRom = 0;
 
-	InitilizeTLB();
+	InitilizeTLB(state);
 
-	SetupRegisters(Registers);
+	SetupRegisters(state, state->Registers);
 
-	BuildInterpreter();
+	BuildInterpreter(state);
 
-	Timers->CurrentTimerType = -1;
-	Timers->Timer = 0;
+	state->Timers->CurrentTimerType = -1;
+	state->Timers->Timer = 0;
 
-	for (count = 0; count < MaxTimers; count ++) { Timers->Active[count] = 0; }
-	ChangeTimer(ViTimer,5000);
-	ChangeCompareTimer();
-	ViFieldNumber = 0;
-	CPURunning = 1;
-	*WaitMode = 0;
+	for (count = 0; count < MaxTimers; count ++) { state->Timers->Active[count] = 0; }
+	ChangeTimer(state,ViTimer,5000);
+	ChangeCompareTimer(state);
+	state->ViFieldNumber = 0;
+	state->CPURunning = 1;
+	*state->WaitMode = 0;
 
-	init_rsp();
+	init_rsp(state);
 
-	Machine_LoadStateFromRAM(savestate);
+	Machine_LoadStateFromRAM(state, savestate);
 
-	SampleRate = 48681812 / (AI_DACRATE_REG + 1);
+	state->SampleRate = 48681812 / (AI_DACRATE_REG + 1);
 
-	OpenSound();
-	
-	if(enableFIFOfull) {
+	if(state->enableFIFOfull) {
 		const float VSyncTiming = 789000.0f;
 		double BytesPerSecond = 48681812.0 / (AI_DACRATE_REG + 1) * 4;
 		double CountsPerSecond = (double)(((double)VSyncTiming) * (double)60.0);
 		double CountsPerByte = (double)CountsPerSecond / (double)BytesPerSecond;
 		uint32_t IntScheduled = (uint32_t)((double)AI_LEN_REG * CountsPerByte);
 
-		ChangeTimer(AiTimer,IntScheduled);
+		ChangeTimer(state,AiTimer,IntScheduled);
 		AI_STATUS_REG|=0x40000000;
 	}
-
-    cpu_stopped = 0;
-	cpu_running = 1;
-	fake_seek_stopping = 0;
-
-	StartInterpreterCPU();
 }
 
 
-void RefreshScreen (void ){
-	ChangeTimer(ViTimer, 300000);
+void RefreshScreen (usf_state_t * state){
+	ChangeTimer(state, ViTimer, 300000);
 
 }
 
-void RunRsp (void) {
+void RunRsp (usf_state_t * state) {
 	if ( ( SP_STATUS_REG & SP_STATUS_HALT ) == 0) {
 		if ( ( SP_STATUS_REG & SP_STATUS_BROKE ) == 0 ) {
 
-			uint32_t Task = *( uint32_t *)(DMEM + 0xFC0);
+			uint32_t Task = *( uint32_t *)(state->DMEM + 0xFC0);
 
 			switch (Task) {
 			case 1:	{
@@ -512,7 +498,7 @@ void RunRsp (void) {
 					if ((SP_STATUS_REG & SP_STATUS_INTR_BREAK) != 0 )
 						MI_INTR_REG |= 1;
 
-					CheckInterrupts();
+					CheckInterrupts(state);
 
 					DPC_STATUS_REG &= ~0x0002;
 					return;
@@ -529,51 +515,37 @@ void RunRsp (void) {
 				break;
 			}
 
-			real_run_rsp(100);
+			real_run_rsp(state, 100);
 			SP_STATUS_REG |= (0x0203 );
 			if ((SP_STATUS_REG & SP_STATUS_INTR_BREAK) != 0 ) {
 				MI_INTR_REG |= 1;
-				CheckInterrupts();
+				CheckInterrupts(state);
 			}
 
 		}
 	}
 }
 
-void TimerDone (void) {
-	switch (Timers->CurrentTimerType) {
+void TimerDone (usf_state_t * state) {
+	switch (state->Timers->CurrentTimerType) {
 	case CompareTimer:
-		if(enablecompare)
+		if(state->enablecompare)
 			FAKE_CAUSE_REGISTER |= CAUSE_IP7;
 		//CheckInterrupts();
-		ChangeCompareTimer();
+		ChangeCompareTimer(state);
 		break;
 	case ViTimer:
-		RefreshScreen();
+		RefreshScreen(state);
 		MI_INTR_REG |= MI_INTR_VI;
-		CheckInterrupts();
-		//CompileCheckInterrupts();
-		*WaitMode=0;
+		CheckInterrupts(state);
+		*state->WaitMode=0;
 		break;
 	case AiTimer:
-		ChangeTimer(AiTimer,0);
+		ChangeTimer(state,AiTimer,0);
 		AI_STATUS_REG=0;
-        AudioIntrReg|=4;
-		//CheckInterrupts();
+        state->AudioIntrReg|=4;
+		//CheckInterrupts(state);
 		break;
 	}
-	CheckTimer();
-}
-
-void Int3() {
-	asm("int $3");
-}
-
-void _Emms() {
-	asm("emms");
-}
-
-
-
-void controlfp(uint32_t control) {
+	CheckTimer(state);
 }

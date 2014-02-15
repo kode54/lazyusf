@@ -52,20 +52,11 @@ NOINLINE void update_conf(const char* source)
 {
 }
 
-#ifndef EMULATE_STATIC_PC
-static int stage;
-#endif
-static int temp_PC;
-#ifdef WAIT_FOR_CPU_HOST
-static short MFC0_count[32];
-/* Keep one C0 MF status read count for each scalar register. */
-#endif
-
 #include "su.h"
 #include "vu/vu.h"
 
 /* Allocate the RSP CPU loop to its own functional space. */
-NOINLINE extern void run_task(void);
+NOINLINE extern void run_task(usf_state_t * state);
 #include "execute.h"
 
 #endif

@@ -25,7 +25,7 @@
 #define SEMIFRAC    (VS[i]*VT[i]*2/2 + 0x8000/2)
 #endif
 
-INLINE static void do_mulf(short* VD, short* VS, short* VT)
+INLINE static void do_mulf(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     register int i;
 
@@ -40,16 +40,16 @@ INLINE static void do_mulf(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         VD[i] -= (VACC_M[i] < 0) & (VS[i] == VT[i]); /* ACC b 31 set, min*min */
 #else
-    SIGNED_CLAMP_AM(VD);
+    SIGNED_CLAMP_AM(state, VD);
 #endif
     return;
 }
 
-static void VMULF(int vd, int vs, int vt, int e)
+static void VMULF(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_mulf(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_mulf(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

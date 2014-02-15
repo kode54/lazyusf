@@ -29,64 +29,66 @@
 #include "usf.h"
 #include "memory.h"
 
+#include "usf_internal.h"
+
 #include <stdio.h>
 
-void (* R4300i_Opcode[64])();
-void (* R4300i_Special[64])();
-void (* R4300i_Regimm[32])();
-void (* R4300i_CoP0[32])();
-void (* R4300i_CoP0_Function[64])();
-void (* R4300i_CoP1[32])();
-void (* R4300i_CoP1_BC[32])();
-void (* R4300i_CoP1_S[64])();
-void (* R4300i_CoP1_D[64])();
-void (* R4300i_CoP1_W[64])();
-void (* R4300i_CoP1_L[64])();
+void (* R4300i_Opcode[64])(usf_state_t *);
+void (* R4300i_Special[64])(usf_state_t *);
+void (* R4300i_Regimm[32])(usf_state_t *);
+void (* R4300i_CoP0[32])(usf_state_t *);
+void (* R4300i_CoP0_Function[64])(usf_state_t *);
+void (* R4300i_CoP1[32])(usf_state_t *);
+void (* R4300i_CoP1_BC[32])(usf_state_t *);
+void (* R4300i_CoP1_S[64])(usf_state_t *);
+void (* R4300i_CoP1_D[64])(usf_state_t *);
+void (* R4300i_CoP1_W[64])(usf_state_t *);
+void (* R4300i_CoP1_L[64])(usf_state_t *);
 
-void R4300i_opcode_SPECIAL (void) {
-	((void (*)()) R4300i_Special[ Opcode.funct ])();
+void R4300i_opcode_SPECIAL (usf_state_t * state) {
+	((void (*)()) R4300i_Special[ state->Opcode.funct ])(state);
 }
 
-void R4300i_opcode_REGIMM (void) {
-	((void (*)()) R4300i_Regimm[ Opcode.rt ])();
+void R4300i_opcode_REGIMM (usf_state_t * state) {
+	((void (*)()) R4300i_Regimm[ state->Opcode.rt ])(state);
 }
 
-void R4300i_opcode_COP0 (void) {
-	((void (*)()) R4300i_CoP0[ Opcode.rs ])();
+void R4300i_opcode_COP0 (usf_state_t * state) {
+	((void (*)()) R4300i_CoP0[ state->Opcode.rs ])(state);
 }
 
-void R4300i_opcode_COP0_CO (void) {
-	((void (*)()) R4300i_CoP0_Function[ Opcode.funct ])();
+void R4300i_opcode_COP0_CO (usf_state_t * state) {
+	((void (*)()) R4300i_CoP0_Function[ state->Opcode.funct ])(state);
 }
 
-void R4300i_opcode_COP1 (void) {
-	((void (*)()) R4300i_CoP1[ Opcode.fmt ])();
+void R4300i_opcode_COP1 (usf_state_t * state) {
+	((void (*)()) R4300i_CoP1[ state->Opcode.fmt ])(state);
 }
 
-void R4300i_opcode_COP1_BC (void) {
-	((void (*)()) R4300i_CoP1_BC[ Opcode.ft ])();
+void R4300i_opcode_COP1_BC (usf_state_t * state) {
+	((void (*)()) R4300i_CoP1_BC[ state->Opcode.ft ])(state);
 }
 
-void R4300i_opcode_COP1_S (void) {
+void R4300i_opcode_COP1_S (usf_state_t * state) {
 	// controlfp(RoundingModel);
-	((void (*)()) R4300i_CoP1_S[ Opcode.funct ])();
+	((void (*)()) R4300i_CoP1_S[ state->Opcode.funct ])(state);
 }
 
-void R4300i_opcode_COP1_D (void) {
+void R4300i_opcode_COP1_D (usf_state_t * state) {
 	// controlfp(RoundingModel);
-	((void (*)()) R4300i_CoP1_D[ Opcode.funct ])();
+	((void (*)()) R4300i_CoP1_D[ state->Opcode.funct ])(state);
 }
 
-void R4300i_opcode_COP1_W (void) {
-	((void (*)()) R4300i_CoP1_W[ Opcode.funct ])();
+void R4300i_opcode_COP1_W (usf_state_t * state) {
+	((void (*)()) R4300i_CoP1_W[ state->Opcode.funct ])(state);
 }
 
-void R4300i_opcode_COP1_L (void) {
-	((void (*)()) R4300i_CoP1_L[ Opcode.funct ])();
+void R4300i_opcode_COP1_L (usf_state_t * state) {
+	((void (*)()) R4300i_CoP1_L[ state->Opcode.funct ])(state);
 }
 
 
-void BuildInterpreter (void ) {
+void BuildInterpreter (usf_state_t * state) {
 	R4300i_Opcode[ 0] = R4300i_opcode_SPECIAL;
 	R4300i_Opcode[ 1] = R4300i_opcode_REGIMM;
 	R4300i_Opcode[ 2] = r4300i_J;
@@ -676,61 +678,61 @@ void BuildInterpreter (void ) {
 }
 
 
-void ExecuteInterpreterOpCode (void) {
+void ExecuteInterpreterOpCode (usf_state_t * state) {
 
 
-	if (*WaitMode) Timers->Timer = -1;
+	if (*state->WaitMode) state->Timers->Timer = -1;
 
-	if (!r4300i_LW_VAddr(PROGRAM_COUNTER, &Opcode.Hex)) {
-		DoTLBMiss(NextInstruction == JUMP,PROGRAM_COUNTER);
-		NextInstruction = NORMAL;
+	if (!r4300i_LW_VAddr(state, state->PROGRAM_COUNTER, &state->Opcode.Hex)) {
+		DoTLBMiss(state, state->NextInstruction == JUMP,state->PROGRAM_COUNTER);
+		state->NextInstruction = NORMAL;
 		return;
 	}
 
 	COUNT_REGISTER += 2;
-	Timers->Timer -= 2;
+	state->Timers->Timer -= 2;
 
 	RANDOM_REGISTER -= 1;
 	if ((int32_t)RANDOM_REGISTER < (int32_t)WIRED_REGISTER) {
 		RANDOM_REGISTER = 31;
 	}
 
-	R4300i_Opcode[ Opcode.op ]();
+	R4300i_Opcode[ state->Opcode.op ](state);
 
-	if (GPR[0].DW != 0) {
-		GPR[0].DW = 0;
+	if (state->GPR[0].DW != 0) {
+		state->GPR[0].DW = 0;
 	}
 
-	switch (NextInstruction) {
+	switch (state->NextInstruction) {
 	case NORMAL:
-		PROGRAM_COUNTER += 4;
+		state->PROGRAM_COUNTER += 4;
 		break;
 	case DELAY_SLOT:
-		NextInstruction = JUMP;
-		PROGRAM_COUNTER += 4;
+		state->NextInstruction = JUMP;
+		state->PROGRAM_COUNTER += 4;
 		break;
 	case JUMP:
-		PROGRAM_COUNTER  = JumpToLocation;
-		NextInstruction = NORMAL;
-		if ((int32_t)Timers->Timer < 0) {  TimerDone(); }
-		if (CPU_Action->DoSomething) { DoSomething(); }
+		state->PROGRAM_COUNTER  = state->JumpToLocation;
+		state->NextInstruction = NORMAL;
+		if ((int32_t)state->Timers->Timer < 0) {  TimerDone(state); }
+		if (state->CPU_Action->DoSomething) { DoSomething(state); }
 
 	}
 }
 
-void StartInterpreterCPU (void ) {
-	NextInstruction = NORMAL;
+void StartInterpreterCPU (usf_state_t * state) {
+	state->NextInstruction = NORMAL;
 
-	while(cpu_running) {
-		ExecuteInterpreterOpCode();
+	while(state->cpu_running) {
+		ExecuteInterpreterOpCode(state);
 	}
 
-	cpu_stopped = 1;
+	state->cpu_stopped = 1;
 
 }
 
-void TestInterpreterJump (uint32_t PC, uint32_t TargetPC, int32_t Reg1, int32_t Reg2) {
+void TestInterpreterJump (usf_state_t * state, uint32_t PC, uint32_t TargetPC, int32_t Reg1, int32_t Reg2) {
 	if (PC != TargetPC) { return; }
-	if (DelaySlotEffectsCompare(PC,Reg1,Reg2)) { return; }
-	InPermLoop();
+	if (DelaySlotEffectsCompare(state,PC,Reg1,Reg2)) { return; }
+	InPermLoop(state);
 }

@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE void do_nor(short* VD, short* VS, short* VT)
+INLINE void do_nor(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     register int i;
 
@@ -23,11 +23,11 @@ INLINE void do_nor(short* VD, short* VS, short* VT)
     return;
 }
 
-static void VNOR(int vd, int vs, int vt, int e)
+static void VNOR(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_nor(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_nor(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

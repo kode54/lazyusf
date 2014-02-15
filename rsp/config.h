@@ -55,6 +55,6 @@
  * (generally for correcting RSP clock behavior on Project64 2.x)
  * Also includes RSP register states debugger.
  */
-#define CFG_WAIT_FOR_CPU_HOST       (0)
+#define CFG_WAIT_FOR_CPU_HOST       (1)
 #define CFG_MEND_SEMAPHORE_LOCK     (0)
 #define CFG_TRACE_RSP_REGISTERS     (0)

@@ -94,15 +94,12 @@ typedef struct {
    uint32_t ValidEntry;
 } FASTTLB;
 
-extern FASTTLB FastTlb[64];
-extern TLB tlb[32];
-
-uint32_t AddressDefined ( uintptr_t VAddr);
-void InitilizeTLB   ( void );
-void SetupTLB       ( void );
-void TLB_Probe      ( void );
-void TLB_Read       ( void );
-uint32_t TranslateVaddr ( uintptr_t * Addr);
-void WriteTLBEntry  ( int32_t index );
+uint32_t AddressDefined ( usf_state_t *, uintptr_t VAddr);
+void InitilizeTLB   ( usf_state_t * );
+void SetupTLB       ( usf_state_t * );
+void TLB_Probe      ( usf_state_t * );
+void TLB_Read       ( usf_state_t * );
+uint32_t TranslateVaddr ( usf_state_t *, uintptr_t * Addr);
+void WriteTLBEntry  ( usf_state_t *, int32_t index );
 
 #endif

@@ -26,7 +26,6 @@
  * For ?WC2 we may need to do byte-precision access just as directly.
  * This is amended by using the `VU_S` and `VU_B` macros defined in `rsp.h`.
  */
-ALIGNED short VR[32][N];
 
 /*
  * accumulator-indexing macros (inverted access dimensions, suited for SSE)
@@ -35,11 +34,9 @@ ALIGNED short VR[32][N];
 #define MD      01
 #define LO      02
 
-ALIGNED static short VACC[3][N];
-
-#define VACC_L      (VACC[LO])
-#define VACC_M      (VACC[MD])
-#define VACC_H      (VACC[HI])
+#define VACC_L      (state->VACC[LO])
+#define VACC_M      (state->VACC[MD])
+#define VACC_H      (state->VACC[HI])
 
 #define ACC_L(i)    (VACC_L[i])
 #define ACC_M(i)    (VACC_M[i])
@@ -49,7 +46,7 @@ ALIGNED static short VACC[3][N];
 #include "clamp.h"
 #include "cf.h"
 
-static void res_V(int vd, int vs, int vt, int e)
+static void res_V(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     register int i;
 
@@ -58,13 +55,13 @@ static void res_V(int vd, int vs, int vt, int e)
         return;
     message("C2\nRESERVED", 2); /* uncertain how to handle reserved, untested */
     for (i = 0; i < N; i++)
-        VR[vd][i] = 0x0000; /* override behavior (bpoint) */
+        state->VR[vd][i] = 0x0000; /* override behavior (bpoint) */
     return;
 }
-static void res_M(int vd, int vs, int vt, int e)
+static void res_M(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     message("VMUL IQ", 2);
-    res_V(vd, vs, vt, e);
+    res_V(state, vd, vs, vt, e);
     return; /* Ultra64 OS did have these, so one could implement this ext. */
 }
 
@@ -110,7 +107,7 @@ static void res_M(int vd, int vs, int vt, int e)
 #include "vsubc.h"
 #include "vxor.h"
 
-static void (*COP2_C2[64])(int, int, int, int) = {
+static void (*COP2_C2[64])(usf_state_t *, int, int, int, int) = {
     VMULF  ,VMULU  ,res_M  ,res_M  ,VMUDL  ,VMUDM  ,VMUDN  ,VMUDH  , /* 000 */
     VMACF  ,VMACU  ,res_M  ,VMACQ  ,VMADL  ,VMADM  ,VMADN  ,VMADH  , /* 001 */
     VADD   ,VSUB   ,res_V  ,VABS   ,VADDC  ,VSUBC  ,res_V  ,res_V  , /* 010 */

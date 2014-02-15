@@ -23,23 +23,24 @@
  * should be forwarded to them so if they want them.
  *
  */
+#include "usf.h"
 #include "main.h"
 #include "cpu.h"
 
+#include "usf_internal.h"
+
 // Skeletal support so USFs that read the controller won't fail (bad practice, though)
 
-void ProcessControllerCommand ( int32_t Control, uint8_t * Command);
+void ProcessControllerCommand ( usf_state_t * state, int32_t Control, uint8_t * Command);
 
-uint8_t *PIF_Ram = 0;
-
-void PifRamRead (void) {
+void PifRamRead (usf_state_t * state) {
 	int32_t Channel, CurPos;
 
 	Channel = 0;
 	CurPos  = 0;
 
 	do {
-		switch(PIF_Ram[CurPos]) {
+		switch(state->PIF_Ram[CurPos]) {
 		case 0x00:
 			Channel += 1;
 			if (Channel > 6) { CurPos = 0x40; }
@@ -48,8 +49,8 @@ void PifRamRead (void) {
 		case 0xFF: break;
 		case 0xB4: case 0x56: case 0xB8: break; /* ??? */
 		default:
-			if ((PIF_Ram[CurPos] & 0xC0) == 0) {
-				CurPos += PIF_Ram[CurPos] + (PIF_Ram[CurPos + 1] & 0x3F) + 1;
+			if ((state->PIF_Ram[CurPos] & 0xC0) == 0) {
+				CurPos += state->PIF_Ram[CurPos] + (state->PIF_Ram[CurPos + 1] & 0x3F) + 1;
 				Channel += 1;
 			} else {
 				CurPos = 0x40;
@@ -60,13 +61,13 @@ void PifRamRead (void) {
 	} while( CurPos < 0x40 );
 }
 
-void PifRamWrite (void) {
+void PifRamWrite (usf_state_t * state) {
 	int Channel, CurPos;
 
 	Channel = 0;
 
 	for (CurPos = 0; CurPos < 0x40; CurPos++){
-		switch(PIF_Ram[CurPos]) {
+		switch(state->PIF_Ram[CurPos]) {
 		case 0x00:
 			Channel += 1;
 			if (Channel > 6) { CurPos = 0x40; }
@@ -75,11 +76,11 @@ void PifRamWrite (void) {
 		case 0xFF: break;
 		case 0xB4: case 0x56: case 0xB8: break; /* ??? */
 		default:
-			if ((PIF_Ram[CurPos] & 0xC0) == 0) {
+			if ((state->PIF_Ram[CurPos] & 0xC0) == 0) {
 				if (Channel < 4) {
-					ProcessControllerCommand(Channel,&PIF_Ram[CurPos]);
+					ProcessControllerCommand(state,Channel,&state->PIF_Ram[CurPos]);
 				}
-				CurPos += PIF_Ram[CurPos] + (PIF_Ram[CurPos + 1] & 0x3F) + 1;
+				CurPos += state->PIF_Ram[CurPos] + (state->PIF_Ram[CurPos + 1] & 0x3F) + 1;
 				Channel += 1;
 			} else
 				CurPos = 0x40;
@@ -87,11 +88,10 @@ void PifRamWrite (void) {
 			break;
 		}
 	}
-	PIF_Ram[0x3F] = 0;
+	state->PIF_Ram[0x3F] = 0;
 }
 
 // always return failure
-void ProcessControllerCommand ( int32_t Control, uint8_t * Command) {
+void ProcessControllerCommand ( usf_state_t * state, int32_t Control, uint8_t * Command) {
 	Command[1] |= 0x80;
 }
-

@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_madn(short* VD, short* VS, short* VT)
+INLINE static void do_madn(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     uint32_t addend[N];
     register int i;
@@ -30,15 +30,15 @@ INLINE static void do_madn(short* VD, short* VS, short* VT)
         VACC_M[i] = (short)addend[i];
     for (i = 0; i < N; i++)
         VACC_H[i] += addend[i] >> 16;
-    SIGNED_CLAMP_AL(VD);
+    SIGNED_CLAMP_AL(state, VD);
     return;
 }
 
-static void VMADN(int vd, int vs, int vt, int e)
+static void VMADN(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_madn(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_madn(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

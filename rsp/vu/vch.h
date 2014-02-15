@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_ch(short* VD, short* VS, short* VT)
+INLINE static void do_ch(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     short eq[N], ge[N], le[N];
     short sn[N];
@@ -28,15 +28,15 @@ INLINE static void do_ch(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         VC[i] ^= -sn[i]; /* if (sn == ~0) {VT = ~VT;} else {VT =  VT;} */
     for (i = 0; i < N; i++)
-        vce[i]  = (VS[i] == VC[i]); /* (VR[vs][i] + ~VC[i] == ~1); */
+        state->vce[i]  = (VS[i] == VC[i]); /* (VR[vs][i] + ~VC[i] == ~1); */
     for (i = 0; i < N; i++)
-        vce[i] &= sn[i];
+        state->vce[i] &= sn[i];
     for (i = 0; i < N; i++)
         VC[i] += sn[i]; /* converts ~(VT) into -(VT) if (sign) */
     for (i = 0; i < N; i++)
         eq[i]  = (VS[i] == VC[i]);
     for (i = 0; i < N; i++)
-        eq[i] |= vce[i];
+        eq[i] |= state->vce[i];
 
 #if (0)
     for (i = 0; i < N; i++)
@@ -59,26 +59,26 @@ INLINE static void do_ch(short* VD, short* VS, short* VT)
         ge[i] = diff[i] >= VT[i];
 #endif
 
-    merge(comp, sn, le, ge);
-    merge(VACC_L, comp, VC, VS);
+    merge(state->comp, sn, le, ge);
+    merge(VACC_L, state->comp, VC, VS);
     vector_copy(VD, VACC_L);
 
     for (i = 0; i < N; i++)
-        clip[i] = ge[i];
+        state->clip[i] = ge[i];
     for (i = 0; i < N; i++)
-        comp[i] = le[i];
+        state->comp[i] = le[i];
     for (i = 0; i < N; i++)
-        ne[i] = eq[i] ^ 1;
+        state->ne[i] = eq[i] ^ 1;
     for (i = 0; i < N; i++)
-        co[i] = sn[i];
+        state->co[i] = sn[i];
     return;
 }
 
-static void VCH(int vd, int vs, int vt, int e)
+static void VCH(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_ch(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_ch(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

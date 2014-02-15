@@ -23,12 +23,12 @@
  * should be forwarded to them so if they want them.
  *
  */
-void PI_DMA_READ  ( void );
-void PI_DMA_WRITE ( void );
-void SI_DMA_READ  ( void );
-void SI_DMA_WRITE ( void );
-void SP_DMA_READ  ( void );
-void SP_DMA_WRITE ( void );
+void PI_DMA_READ  ( usf_state_t * );
+void PI_DMA_WRITE ( usf_state_t * );
+void SI_DMA_READ  ( usf_state_t * );
+void SI_DMA_WRITE ( usf_state_t * );
+void SP_DMA_READ  ( usf_state_t * );
+void SP_DMA_WRITE ( usf_state_t * );
 
 
 

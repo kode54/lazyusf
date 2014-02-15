@@ -8,20 +8,15 @@
 #include "cpu.h"
 #include "memory.h"
 
+#include "usf_internal.h"
 
-int InitalizeApplication ( void )
-{
-
-	return 1;
-}
-
-void StopEmulation(void)
+void StopEmulation(usf_state_t * state)
 {
 	//asm("int $3");
 	//printf("Arrivederci!\n\n");
 	//Release_Memory();
 	//exit(0);
-	cpu_running = 0;
+	state->cpu_running = 0;
 }
 
 void DisplayError (char * Message, ...) {
@@ -33,9 +28,4 @@ void DisplayError (char * Message, ...) {
 	//va_end( ap );
 
 	//printf("Error: %s\n", Msg);
-}
-
-void UsfSleep(int32_t time)
-{
-	usleep(time * 1000);
 }

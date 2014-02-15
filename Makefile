@@ -1,5 +1,5 @@
 CFLAGS = -w -c
-LDFLAGS = -o lazyusf 
+LDFLAGS = -o lazyusf
 
 OBJS = audio.o cpu.o dma.o exception.o interpreter_cpu.o interpreter_ops.o main.o pif.o registers.o tlb.o usf.o memory.o rsp.o
 
@@ -25,7 +25,6 @@ lazyusf : $(OBJS)
 
 rsp.o: rsp/rsp.c
 	$(GCC) $(CFLAGS) $(ROPTS) rsp/rsp.c
-
 
 clean:
 	rm -f $(OBJS) lazyusf > /dev/null

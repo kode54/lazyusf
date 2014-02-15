@@ -56,21 +56,20 @@ typedef struct {
 	int32_t Timer;
 } SYSTEM_TIMERS;
 
-void ChangeCompareTimer ( void );
-void ChangeTimer        ( int32_t Type, int32_t Value );
-void CheckTimer         ( void );
-void CloseCpu           ( void );
-int32_t  DelaySlotEffectsCompare ( uint32_t PC, uint32_t Reg1, uint32_t Reg2 );
-int32_t  DelaySlotEffectsJump (uint32_t JumpPC);
-void DoSomething        ( void );
-void InPermLoop         ( void );
-void InitiliazeCPUFlags ( void );
-void RefreshScreen      ( void );
-void RunRsp             ( void );
-void StartEmulation     ( void );
-void TimerDone          ( void );
-void RecompileTimerDone ( void );
-void controlfp			(uint32_t mask);
+void ChangeCompareTimer ( usf_state_t * );
+void ChangeTimer        ( usf_state_t *, int32_t Type, int32_t Value );
+void CheckTimer         ( usf_state_t * );
+void CloseCpu           ( usf_state_t * );
+int32_t  DelaySlotEffectsCompare ( usf_state_t *, uint32_t PC, uint32_t Reg1, uint32_t Reg2 );
+int32_t  DelaySlotEffectsJump ( usf_state_t *, uint32_t JumpPC);
+void DoSomething        ( usf_state_t * );
+void InPermLoop         ( usf_state_t * );
+void InitiliazeCPUFlags ( usf_state_t * );
+void RefreshScreen      ( usf_state_t * );
+void RunRsp             ( usf_state_t * );
+void StartEmulation     ( usf_state_t * );
+void TimerDone          ( usf_state_t * );
+void RecompileTimerDone ( usf_state_t * );
 
 #define NORMAL					0
 #define DO_DELAY_SLOT			1
@@ -91,10 +90,4 @@ enum SaveType {
 	FlashRam
 };
 
-
-extern uint32_t NextInstruction, JumpToLocation, ManualPaused, CPU_Paused, CountPerOp, AudioIntrReg, * WaitMode;
-extern CPU_ACTION * CPU_Action;
-extern SYSTEM_TIMERS * Timers;
-extern OPCODE Opcode;
-extern uint32_t CPURunning;
 #endif

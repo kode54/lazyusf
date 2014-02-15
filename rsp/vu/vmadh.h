@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_madh(short* VD, short* VS, short* VT)
+INLINE static void do_madh(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     int32_t product[N];
     uint32_t addend[N];
@@ -27,15 +27,15 @@ INLINE static void do_madh(short* VD, short* VS, short* VT)
         VACC_M[i] += (short)(VS[i] * VT[i]);
     for (i = 0; i < N; i++)
         VACC_H[i] += (addend[i] >> 16) + (product[i] >> 16);
-    SIGNED_CLAMP_AM(VD);
+    SIGNED_CLAMP_AM(state, VD);
     return;
 }
 
-static void VMADH(int vd, int vs, int vt, int e)
+static void VMADH(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_madh(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_madh(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

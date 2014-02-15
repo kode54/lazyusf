@@ -1,5 +1,6 @@
 
 #include <stdint.h>
+
 #include "usf.h"
 #include "cpu.h"
 #include "memory.h"
@@ -10,107 +11,208 @@
 
 #include "types.h"
 
-uint32_t cpu_running = 0, use_interpreter = 0, is_paused = 0, cpu_stopped = 1, fake_seek_stopping = 0;
+#include "usf_internal.h"
 
-uint32_t enablecompare = 0, enableFIFOfull = 0;
-
-uint32_t usf_length = 0, usf_fade_length = 0;
-
-int LoadUSF()
+ssize_t get_usf_state_size()
 {
-	uint32_t reserved_size, temp;
+    return sizeof(usf_state_t) + 8192;
+}
 
-	fread( &enablecompare, sizeof(uint32_t), 1, stdin );
-	fread( &enableFIFOfull, sizeof(uint32_t), 1, stdin );
+void usf_clear(void * state)
+{
+    ssize_t offset;
+    memset(state, 0, get_usf_state_size());
+    offset = 4096 - (((uintptr_t)state) & 4095);
+    USF_STATE_HELPER->offset_to_structure = offset;
+    
+	//USF_STATE->savestatespace = NULL;
+	//USF_STATE->cpu_running = 0;
+	USF_STATE->cpu_stopped = 1;
+    
+    //USF_STATE->enablecompare = 0;
+    //USF_STATE->enableFIFOfull = 0;
+    
+    //USF_STATE->NextInstruction = 0;
+    //USF_STATE->JumpToLocation = 0;
+    //USF_STATE->AudioIntrReg = 0;
+    //USF_STATE->CPU_Action = 0;
+    //USF_STATE->Timers = 0;
+    //USF_STATE->CPURunning = 0;
+    //USF_STATE->SPHack = 0;
+    //USF_STATE->WaitMode = 0;
+    
+    //USF_STATE->TLB_Map = 0;
+    //USF_STATE->MemChunk = 0;
+    USF_STATE->RdramSize = 0x800000;
+    USF_STATE->SystemRdramSize = 0x800000;
+    USF_STATE->RomFileSize = 0x4000000;
+    
+    //USF_STATE->N64MEM = 0;
+    //USF_STATE->RDRAM = 0;
+    //USF_STATE->DMEM = 0;
+    //USF_STATE->IMEM = 0;
 
-	fread( &reserved_size, sizeof(uint32_t), 1, stdin );
+    //memset(USF_STATE->ROMPages, 0, sizeof(USF_STATE->ROMPages));
+    //USF_STATE->savestatespace = 0;
+    //USF_STATE->NOMEM = 0;
+    
+    //USF_STATE->WrittenToRom = 0;
+    //USF_STATE->WroteToRom = 0;
+    //USF_STATE->TempValue = 0;
+    //USF_STATE->MemoryState = 0;
+    //USF_STATE->EmptySpace = 0;
+    
+    //USF_STATE->Registers = 0;
+    
+    //USF_STATE->PIF_Ram = 0;
 
-	while ( reserved_size ) {
-		fread( &temp, sizeof(uint32_t), 1, stdin );
-		if(temp == 0x34365253) { //there is a rom section
-			uint32_t len = 0, start = 0;
-			fread(&len, sizeof(uint32_t), 1, stdin);
+	PreAllocate_Memory(USF_STATE);
+}
+
+void usf_set_compare(void * state, int enable)
+{
+    USF_STATE->enablecompare = enable;
+}
+
+void usf_set_fifo_full(void * state, int enable)
+{
+    USF_STATE->enableFIFOfull = enable;
+}
+
+static uint32_t get_le32( const void * _p )
+{
+    const uint8_t * p = (const uint8_t *) _p;
+    return p[0] + p[1] * 0x100 + p[2] * 0x10000 + p[3] * 0x1000000;
+}
+
+int usf_upload_section(void * state, const uint8_t * data, ssize_t size)
+{
+    uint32_t temp;
+    
+    if ( size < 4 ) return -1;
+    temp = get_le32( data ); data += 4; size -= 4;
+
+    if(temp == 0x34365253) { //there is a rom section
+        uint32_t len, start;
+        
+        if ( size < 4 ) return -1;
+        len = get_le32( data ); data += 4; size -= 4;
+
+		while(len) {
+            if ( size < 4 ) return -1;
+            start = get_le32( data ); data += 4; size -= 4;
 
 			while(len) {
-				fread(&start, sizeof(uint32_t), 1, stdin);
+				int page = start >> 16;
+				int readLen = ( ((start + len) >> 16) > page) ? (((page + 1) << 16) - start) : len;
 
-				while(len) {
-					int page = start >> 16;
-					int readLen = ( ((start + len) >> 16) > page) ? (((page + 1) << 16) - start) : len;
+				if( USF_STATE->ROMPages[page] == 0 ) {
+					USF_STATE->ROMPages[page] = malloc(0x10000);
+                    if ( USF_STATE->ROMPages[page] == 0 )
+                        return -1;
+                    
+					memset(USF_STATE->ROMPages[page], 0, 0x10000);
+                }
+                
+                if ( size < readLen )
+                    return -1;
+                
+                memcpy( USF_STATE->ROMPages[page] + (start & 0xffff), data, readLen );
+                data += readLen; size -= readLen;
 
-					if(ROMPages[page] == 0) {
-						ROMPages[page] = malloc(0x10000);
-						memset(ROMPages[page], 0, 0x10000);
-                			}
-
-					fread(ROMPages[page] + (start & 0xffff), readLen, 1, stdin);
-
-					start += readLen;
-					len -= readLen;
-				}
-
-				fread(&len, sizeof(uint32_t), 1, stdin);
+				start += readLen;
+				len -= readLen;
 			}
 
+            if ( size < 4 ) return -1;
+            len = get_le32( data ); data += 4; size -= 4;
 		}
-
-		fread(&temp, sizeof(uint32_t), 1, stdin);
-		if(temp == 0x34365253) {
-			uint32_t len = 0, start = 0;
-			fread(&len, sizeof(uint32_t), 1, stdin);
-
-			while(len) {
-				fread(&start, sizeof(uint32_t), 1, stdin);
-
-				fread(savestatespace + start, len, 1, stdin);
-
-				fread(&len, sizeof(uint32_t), 1, stdin);
-			}
-		}
-
-		fread( &reserved_size, sizeof(uint32_t), 1, stdin );
 	}
 
-    // Detect the Ramsize before the memory allocation 
-	
-	if(*(uint32_t*)(savestatespace + 4) == 0x400000) {
-		RdramSize = 0x400000;
-		savestatespace = realloc(savestatespace, 0x40275c);
-	} else if(*(uint32_t*)(savestatespace + 4) == 0x800000)
-		RdramSize = 0x800000;
+    if ( size < 4 ) return -1;
+    temp = get_le32( data ); data += 4; size -= 4;
 
-	return 1;
-}
+	if(temp == 0x34365253) {
+		uint32_t len, start;
+        
+        if ( size < 4 ) return -1;
+        len = get_le32( data ); data += 4; size -= 4;
 
+		while(len) {
+            if ( size < 4 ) return -1;
+            start = get_le32( data ); data += 4; size -= 4;
 
-void usf_play()
-{
-	uint32_t i = 0;
+            if ( size < len ) return -1;
+            memcpy( USF_STATE->savestatespace + start, data, len );
+            data += len; size -= len;
 
-	savestatespace = NULL;
-	cpu_running = is_paused = fake_seek_stopping = 0;
-	cpu_stopped = 1;
+            if ( size < 4 ) return -1;
+            len = get_le32( data ); data += 4; size -= 4;
+		}
+	}
 
-    // Allocate main memory after usf loads  (to determine ram size)
-	
-	PreAllocate_Memory();
-
-    if(!LoadUSF()) {
-		Release_Memory();
-    }
-	
-	Allocate_Memory();
-	
-    do {		
-		StartEmulationFromSave(savestatespace);		
-	} while (cpu_running);
-	
-	Release_Memory();
-
-}
-
-int main(void)
-{
-	usf_play();
 	return 0;
+}
+
+static void usf_startup(void * state)
+{
+    // Detect the Ramsize before the memory allocation
+	
+	if(*(uint32_t*)(USF_STATE->savestatespace + 4) == 0x400000) {
+        void * savestate;
+		USF_STATE->RdramSize = 0x400000;
+		savestate = realloc(USF_STATE->savestatespace, 0x40275c);
+        if ( savestate )
+            USF_STATE->savestatespace = savestate;
+	} else if(*(uint32_t*)(USF_STATE->savestatespace + 4) == 0x800000)
+		USF_STATE->RdramSize = 0x800000;
+
+	Allocate_Memory(state);
+
+	StartEmulationFromSave(USF_STATE, USF_STATE->savestatespace);
+}
+
+void usf_render(void * state, int16_t * buffer, ssize_t count, int32_t * sample_rate)
+{
+    if ( !USF_STATE->MemoryState )
+        usf_startup( USF_STATE );
+    
+    if ( USF_STATE->samples_in_buffer )
+    {
+        ssize_t do_max = USF_STATE->samples_in_buffer;
+        if ( do_max > count )
+            do_max = count;
+        
+        memcpy( buffer, USF_STATE->samplebuf, sizeof(int16_t) * 2 * do_max );
+        
+        USF_STATE->samples_in_buffer -= do_max;
+        
+        if ( sample_rate )
+            *sample_rate = USF_STATE->SampleRate;
+        
+        if ( USF_STATE->samples_in_buffer )
+        {
+            memmove( USF_STATE->samplebuf, USF_STATE->samplebuf + do_max, sizeof(int16_t) * 2 * USF_STATE->samples_in_buffer );
+            return;
+        }
+        
+        buffer += 2 * do_max;
+        count -= do_max;
+    }
+
+    USF_STATE->sample_buffer = buffer;
+    USF_STATE->sample_buffer_count = count;
+    
+    USF_STATE->cpu_stopped = 0;
+	USF_STATE->cpu_running = 1;
+    
+	StartInterpreterCPU(USF_STATE);
+    
+    if ( sample_rate )
+        *sample_rate = USF_STATE->SampleRate;
+}
+
+void usf_shutdown(void * state)
+{
+	Release_Memory(USF_STATE);
 }

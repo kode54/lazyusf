@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_mudh(short* VD, short* VS, short* VT)
+INLINE static void do_mudh(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     register int i;
 
@@ -23,15 +23,15 @@ INLINE static void do_mudh(short* VD, short* VS, short* VT)
         VACC_M[i] = (short)(VS[i]*VT[i] >>  0);
     for (i = 0; i < N; i++)
         VACC_H[i] = (short)(VS[i]*VT[i] >> 16);
-    SIGNED_CLAMP_AM(VD);
+    SIGNED_CLAMP_AM(state, VD);
     return;
 }
 
-static void VMUDH(int vd, int vs, int vt, int e)
+static void VMUDH(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_mudh(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_mudh(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE void do_xor(short* VD, short* VS, short* VT)
+INLINE void do_xor(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     register int i;
 
@@ -23,11 +23,11 @@ INLINE void do_xor(short* VD, short* VS, short* VT)
     return;
 }
 
-static void VXOR(int vd, int vs, int vt, int e)
+static void VXOR(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_xor(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_xor(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

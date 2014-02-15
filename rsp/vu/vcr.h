@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_cr(short* VD, short* VS, short* VT)
+INLINE static void do_cr(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     short ge[N], le[N], sn[N];
     short VC[N];
@@ -45,23 +45,23 @@ INLINE static void do_cr(short* VD, short* VS, short* VT)
     vector_copy(VD, VACC_L);
 
     for (i = 0; i < N; i++)
-        clip[i] = ge[i];
+        state->clip[i] = ge[i];
     for (i = 0; i < N; i++)
-        comp[i] = le[i];
+        state->comp[i] = le[i];
     for (i = 0; i < N; i++)
-        ne[i] = 0;
+        state->ne[i] = 0;
     for (i = 0; i < N; i++)
-        co[i] = 0;
+        state->co[i] = 0;
     for (i = 0; i < N; i++)
-        vce[i] = 0;
+        state->vce[i] = 0;
     return;
 }
 
-static void VCR(int vd, int vs, int vt, int e)
+static void VCR(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_cr(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_cr(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

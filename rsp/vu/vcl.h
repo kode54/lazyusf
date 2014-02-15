@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_cl(short* VD, short* VS, short* VT)
+INLINE static void do_cl(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     short eq[N], ge[N], le[N];
     short gen[N], len[N], lz[N], uz[N], sn[N];
@@ -34,9 +34,9 @@ INLINE static void do_cl(short* VD, short* VS, short* VT)
         le[i] = comp[i];
 */
     for (i = 0; i < N; i++)
-        eq[i] = ne[i] ^ 1;
+        eq[i] = state->ne[i] ^ 1;
     for (i = 0; i < N; i++)
-        sn[i] = co[i];
+        sn[i] = state->co[i];
 /*
  * Now that we have extracted all the flags, we will essentially be masking
  * them back in where they came from redundantly, unless the corresponding
@@ -57,9 +57,9 @@ INLINE static void do_cl(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         len[i] = lz[i] & uz[i];
     for (i = 0; i < N; i++)
-        gen[i] = gen[i] & vce[i];
+        gen[i] = gen[i] & state->vce[i];
     for (i = 0; i < N; i++)
-        len[i] = len[i] & (vce[i] ^ 1);
+        len[i] = len[i] & (state->vce[i] ^ 1);
     for (i = 0; i < N; i++)
         len[i] = len[i] | gen[i];
     for (i = 0; i < N; i++)
@@ -67,34 +67,34 @@ INLINE static void do_cl(short* VD, short* VS, short* VT)
 
     for (i = 0; i < N; i++)
         cmp[i] = eq[i] & sn[i];
-    merge(le, cmp, len, comp);
+    merge(le, cmp, len, state->comp);
 
     for (i = 0; i < N; i++)
         cmp[i] = eq[i] & (sn[i] ^ 1);
-    merge(ge, cmp, gen, clip);
+    merge(ge, cmp, gen, state->clip);
 
     merge(cmp, sn, le, ge);
     merge(VACC_L, cmp, (short *)VC, VS);
     vector_copy(VD, VACC_L);
 
     for (i = 0; i < N; i++)
-        clip[i] = ge[i];
+        state->clip[i] = ge[i];
     for (i = 0; i < N; i++)
-        comp[i] = le[i];
+        state->comp[i] = le[i];
     for (i = 0; i < N; i++)
-        ne[i] = 0;
+        state->ne[i] = 0;
     for (i = 0; i < N; i++)
-        co[i] = 0;
+        state->co[i] = 0;
     for (i = 0; i < N; i++)
-        vce[i] = 0;
+        state->vce[i] = 0;
     return;
 }
 
-static void VCL(int vd, int vs, int vt, int e)
+static void VCL(usf_state_t * state, int vd, int vs, int vt, int e)
 {
     short ST[N];
 
-    SHUFFLE_VECTOR(ST, VR[vt], e);
-    do_cl(VR[vd], VR[vs], ST);
+    SHUFFLE_VECTOR(ST, state->VR[vt], e);
+    do_cl(state, state->VR[vd], state->VR[vs], ST);
     return;
 }

@@ -14,13 +14,6 @@
 #ifndef _DIVROM_H
 #define _DIVROM_H
 
-static int DivIn = 0; /* buffered numerator of division read from vector file */
-static int DivOut = 0; /* global division result set by VRCP/VRCPL/VRSQ/VRSQH */
-#if (0)
-static int MovIn; /* We do not emulate this register (obsolete, for VMOV). */
-#endif
-
-static int DPH;
 /*
  * Boolean flag:  Double-precision high was the last vector divide op?
  *
@@ -1073,7 +1066,7 @@ enum {
     SP_DIV_PRECISION_CURRENT
 };
 
-INLINE static void do_div(int data, int sqrt, int precision)
+INLINE static void do_div(usf_state_t * state, int data, int sqrt, int precision)
 {
     int32_t addr;
     int fetch;
@@ -1106,13 +1099,13 @@ INLINE static void do_div(int data, int sqrt, int precision)
     fetch = div_ROM[addr];
     shift ^= 31; /* flipping shift direction from left- to right- */
     shift >>= (sqrt == SP_DIV_SQRT_YES);
-    DivOut = (0x40000000 | (fetch << 14)) >> shift;
-    if (DivIn == 0) /* corner case:  overflow via division by zero */
-        DivOut = 0x7FFFFFFF;
-    else if (DivIn == -32768) /* corner case:  signed underflow barrier */
-        DivOut = 0xFFFF0000;
+    state->DivOut = (0x40000000 | (fetch << 14)) >> shift;
+    if (state->DivIn == 0) /* corner case:  overflow via division by zero */
+        state->DivOut = 0x7FFFFFFF;
+    else if (state->DivIn == -32768) /* corner case:  signed underflow barrier */
+        state->DivOut = 0xFFFF0000;
     else
-        DivOut ^= (DivIn < 0) ? ~0 : 0;
+        state->DivOut ^= (state->DivIn < 0) ? ~0 : 0;
     return;
 }
 #endif
