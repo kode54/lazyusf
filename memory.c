@@ -66,7 +66,7 @@ void * large_alloc(size_t size)
 	return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 }
 
-void * large_free(void * p, size_t size)
+void large_free(void * p, size_t size)
 {
 	munmap( p, size );
 }
