@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="rsp">
+      <UniqueIdentifier>{e389fc0f-cab4-4c28-9331-3152224d101a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rsp\Source Files">
+      <UniqueIdentifier>{00cd3832-5114-4c56-8fb7-287511a1c8bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rsp\Header Files">
+      <UniqueIdentifier>{752f1f1e-af69-4e7d-b073-55be5c7b45ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rsp\Header Files\vu">
+      <UniqueIdentifier>{8cfbae89-d3d4-41d5-87a9-fbccc3f6def5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\audio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\dma.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\exception.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\interpreter_cpu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\interpreter_ops.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\memory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pif.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\registers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tlb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\usf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp\rsp.c">
+      <Filter>rsp\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\audio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dma.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\interpreter_cpu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\interpreter_ops.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\opcode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\pif.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\registers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tlb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\usf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\usf_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\config.h">
+      <Filter>rsp\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\execute.h">
+      <Filter>rsp\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\rsp.h">
+      <Filter>rsp\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\su.h">
+      <Filter>rsp\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\cf.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\clamp.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\divrom.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\shuffle.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vabs.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vadd.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vaddc.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vand.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vch.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vcl.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vcr.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\veq.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vge.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vlt.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmacf.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmacq.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmacu.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmadh.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmadl.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmadm.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmadn.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmov.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmrg.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmudh.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmudl.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmudm.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmudn.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmulf.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vmulu.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vnand.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vne.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vnop.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vnor.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vnxor.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vor.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vrcp.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vrcph.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vrcpl.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vrsq.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vrsqh.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vrsql.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vsaw.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vsub.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vsubc.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vu.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp\vu\vxor.h">
+      <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

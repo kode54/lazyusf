@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\audio.c" />
+    <ClCompile Include="..\..\cpu.c" />
+    <ClCompile Include="..\..\dma.c" />
+    <ClCompile Include="..\..\exception.c" />
+    <ClCompile Include="..\..\interpreter_cpu.c" />
+    <ClCompile Include="..\..\interpreter_ops.c" />
+    <ClCompile Include="..\..\main.c" />
+    <ClCompile Include="..\..\memory.c" />
+    <ClCompile Include="..\..\pif.c" />
+    <ClCompile Include="..\..\registers.c" />
+    <ClCompile Include="..\..\rsp\rsp.c">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;ARCH_MIN_SSE2;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;ARCH_MIN_SSE2;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\..\tlb.c" />
+    <ClCompile Include="..\..\usf.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\audio.h" />
+    <ClInclude Include="..\..\config.h" />
+    <ClInclude Include="..\..\cpu.h" />
+    <ClInclude Include="..\..\dma.h" />
+    <ClInclude Include="..\..\exception.h" />
+    <ClInclude Include="..\..\interpreter_cpu.h" />
+    <ClInclude Include="..\..\interpreter_ops.h" />
+    <ClInclude Include="..\..\main.h" />
+    <ClInclude Include="..\..\memory.h" />
+    <ClInclude Include="..\..\opcode.h" />
+    <ClInclude Include="..\..\pif.h" />
+    <ClInclude Include="..\..\registers.h" />
+    <ClInclude Include="..\..\rsp.h" />
+    <ClInclude Include="..\..\rsp\config.h" />
+    <ClInclude Include="..\..\rsp\execute.h" />
+    <ClInclude Include="..\..\rsp\rsp.h" />
+    <ClInclude Include="..\..\rsp\su.h" />
+    <ClInclude Include="..\..\rsp\vu\cf.h" />
+    <ClInclude Include="..\..\rsp\vu\clamp.h" />
+    <ClInclude Include="..\..\rsp\vu\divrom.h" />
+    <ClInclude Include="..\..\rsp\vu\shuffle.h" />
+    <ClInclude Include="..\..\rsp\vu\vabs.h" />
+    <ClInclude Include="..\..\rsp\vu\vadd.h" />
+    <ClInclude Include="..\..\rsp\vu\vaddc.h" />
+    <ClInclude Include="..\..\rsp\vu\vand.h" />
+    <ClInclude Include="..\..\rsp\vu\vch.h" />
+    <ClInclude Include="..\..\rsp\vu\vcl.h" />
+    <ClInclude Include="..\..\rsp\vu\vcr.h" />
+    <ClInclude Include="..\..\rsp\vu\veq.h" />
+    <ClInclude Include="..\..\rsp\vu\vge.h" />
+    <ClInclude Include="..\..\rsp\vu\vlt.h" />
+    <ClInclude Include="..\..\rsp\vu\vmacf.h" />
+    <ClInclude Include="..\..\rsp\vu\vmacq.h" />
+    <ClInclude Include="..\..\rsp\vu\vmacu.h" />
+    <ClInclude Include="..\..\rsp\vu\vmadh.h" />
+    <ClInclude Include="..\..\rsp\vu\vmadl.h" />
+    <ClInclude Include="..\..\rsp\vu\vmadm.h" />
+    <ClInclude Include="..\..\rsp\vu\vmadn.h" />
+    <ClInclude Include="..\..\rsp\vu\vmov.h" />
+    <ClInclude Include="..\..\rsp\vu\vmrg.h" />
+    <ClInclude Include="..\..\rsp\vu\vmudh.h" />
+    <ClInclude Include="..\..\rsp\vu\vmudl.h" />
+    <ClInclude Include="..\..\rsp\vu\vmudm.h" />
+    <ClInclude Include="..\..\rsp\vu\vmudn.h" />
+    <ClInclude Include="..\..\rsp\vu\vmulf.h" />
+    <ClInclude Include="..\..\rsp\vu\vmulu.h" />
+    <ClInclude Include="..\..\rsp\vu\vnand.h" />
+    <ClInclude Include="..\..\rsp\vu\vne.h" />
+    <ClInclude Include="..\..\rsp\vu\vnop.h" />
+    <ClInclude Include="..\..\rsp\vu\vnor.h" />
+    <ClInclude Include="..\..\rsp\vu\vnxor.h" />
+    <ClInclude Include="..\..\rsp\vu\vor.h" />
+    <ClInclude Include="..\..\rsp\vu\vrcp.h" />
+    <ClInclude Include="..\..\rsp\vu\vrcph.h" />
+    <ClInclude Include="..\..\rsp\vu\vrcpl.h" />
+    <ClInclude Include="..\..\rsp\vu\vrsq.h" />
+    <ClInclude Include="..\..\rsp\vu\vrsqh.h" />
+    <ClInclude Include="..\..\rsp\vu\vrsql.h" />
+    <ClInclude Include="..\..\rsp\vu\vsaw.h" />
+    <ClInclude Include="..\..\rsp\vu\vsub.h" />
+    <ClInclude Include="..\..\rsp\vu\vsubc.h" />
+    <ClInclude Include="..\..\rsp\vu\vu.h" />
+    <ClInclude Include="..\..\rsp\vu\vxor.h" />
+    <ClInclude Include="..\..\tlb.h" />
+    <ClInclude Include="..\..\types.h" />
+    <ClInclude Include="..\..\usf.h" />
+    <ClInclude Include="..\..\usf_internal.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{93F3F1BE-FCC5-482E-A64C-4F7FA34DBE69}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>lazyusf</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110_xp</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
