@@ -212,6 +212,12 @@ void usf_render(void * state, int16_t * buffer, size_t count, int32_t * sample_r
         *sample_rate = USF_STATE->SampleRate;
 }
 
+void usf_restart(void * state)
+{
+    if ( USF_STATE->MemoryState )
+        StartEmulationFromSave(USF_STATE, USF_STATE->savestatespace);
+}
+
 void usf_shutdown(void * state)
 {
 	Release_Memory(USF_STATE);
