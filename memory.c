@@ -204,6 +204,8 @@ uint32_t r4300i_LD_VAddr ( usf_state_t * state, uint32_t VAddr, uint64_t * Value
 }
 
 int32_t r4300i_LH_NonMemory ( usf_state_t * state, uint32_t PAddr, uint32_t * Value, int32_t SignExtend ) {
+    (void)state;
+    (void)SignExtend;
 	switch (PAddr & 0xFFF00000) {
 	default:
 		* Value = 0;
