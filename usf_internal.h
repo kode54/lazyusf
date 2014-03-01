@@ -54,6 +54,7 @@ struct usf_state
     int DPH;
     
     // rsp/rsp.h
+    int stage; // unused since EMULATE_STATIC_PC is defined by default in rsp/config.h
     int temp_PC;
     short MFC0_count[32];
     
