@@ -16,7 +16,6 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-char disasm[24];
 #define reserved_       "illegal"
 /* Or, "invalid".  Change it to whatever, but it must NOT exceed 7 letters. */
 
@@ -106,7 +105,7 @@ static const char* computational_elements[16] = {
  *     3.  e==0x1 is impossible to set in the assembler; "[]" is just for debug.
  */
 
-void disassemble(int IW)
+void disassemble(char disasm[32], int IW)
 {
     register int ID;
     unsigned short imm = (IW & 0x0000FFFF);
@@ -122,9 +121,9 @@ void disassemble(int IW)
     if ((op & ~001) == 000) /* SPECIAL/REGIMM */
         ID = op + 1;
     else if ((op & 075) == 020) /* COPz */
-        ID = (op & 002) ? 04 + 3*!!(IW & 0x02000000) : 03;
+        ID = (op & 002) ? 04 + ((IW & 0x02000000) ? 3 : 0) : 03;
     else if ((op & 067) == 062) /* ?WC2 */
-        ID = 05 + !!(op & 010);
+        ID = 05 + ((op & 010) ? 1 : 0);
     else
         ID = 00;
 
