@@ -13,7 +13,7 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE void do_nxor(usf_state_t * state, short* VD, short* VS, short* VT)
+INLINE static void do_nxor(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     register int i;
 

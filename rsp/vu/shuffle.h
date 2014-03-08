@@ -46,7 +46,7 @@ static const int ei[16][8] = {
     { 07, 07, 07, 07, 07, 07, 07, 07 }  /* 7 */
 };
 
-int sub_mask[16] = {
+static const int sub_mask[16] = {
     0x0,
     0x0,
     0x1, 0x1,
@@ -116,6 +116,7 @@ INLINE static void SHUFFLE_VECTOR(short* VD, short* VT, const int e)
 #define B(x)    ((x) & 3)
 #define SHUFFLE(a,b,c,d)    ((B(d)<<6) | (B(c)<<4) | (B(b)<<2) | (B(a)<<0))
 
+#if 0
 static const int simm[16] = {
     SHUFFLE(00, 01, 02, 03), /* vector operands */
     SHUFFLE(00, 01, 02, 03),
@@ -134,6 +135,7 @@ static const int simm[16] = {
     SHUFFLE(06, 06, 06, 06),
     SHUFFLE(07, 07, 07, 07)
 };
+#endif
 
 static __m128i shuffle_none(__m128i xmm)
 {/*
