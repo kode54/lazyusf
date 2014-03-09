@@ -25,6 +25,24 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;ARCH_MIN_SSE2;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;ARCH_MIN_SSE2;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\alist.c" />
+    <ClCompile Include="..\..\rsp_hle\alist_audio.c" />
+    <ClCompile Include="..\..\rsp_hle\alist_naudio.c" />
+    <ClCompile Include="..\..\rsp_hle\alist_nead.c" />
+    <ClCompile Include="..\..\rsp_hle\audio.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)/audio_hle.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)/audio_hle.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\cicx105.c" />
+    <ClCompile Include="..\..\rsp_hle\hle.c" />
+    <ClCompile Include="..\..\rsp_hle\jpeg.c" />
+    <ClCompile Include="..\..\rsp_hle\memory.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)/memory_hle.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)/memory_hle.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\mp3.c" />
+    <ClCompile Include="..\..\rsp_hle\musyx.c" />
+    <ClCompile Include="..\..\rsp_hle\plugin.c" />
     <ClCompile Include="..\..\tlb.c" />
     <ClCompile Include="..\..\usf.c" />
   </ItemGroup>
@@ -92,6 +110,17 @@
     <ClInclude Include="..\..\rsp\vu\vsubc.h" />
     <ClInclude Include="..\..\rsp\vu\vu.h" />
     <ClInclude Include="..\..\rsp\vu\vxor.h" />
+    <ClInclude Include="..\..\rsp_hle\alist.h" />
+    <ClInclude Include="..\..\rsp_hle\alist_internal.h" />
+    <ClInclude Include="..\..\rsp_hle\arithmetics.h" />
+    <ClInclude Include="..\..\rsp_hle\audio.h" />
+    <ClInclude Include="..\..\rsp_hle\cicx105.h" />
+    <ClInclude Include="..\..\rsp_hle\hle.h" />
+    <ClInclude Include="..\..\rsp_hle\hle_external.h" />
+    <ClInclude Include="..\..\rsp_hle\hle_internal.h" />
+    <ClInclude Include="..\..\rsp_hle\jpeg.h" />
+    <ClInclude Include="..\..\rsp_hle\memory.h" />
+    <ClInclude Include="..\..\rsp_hle\musyx.h" />
     <ClInclude Include="..\..\tlb.h" />
     <ClInclude Include="..\..\types.h" />
     <ClInclude Include="..\..\usf.h" />

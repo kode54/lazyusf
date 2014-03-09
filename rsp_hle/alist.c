@@ -21,7 +21,11 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.          *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+#include "mystdbool.h"
+#endif
 #include <stdint.h>
 #include <string.h>
 
@@ -67,11 +71,13 @@ static void alist_envmix_mix(size_t n, int16_t** dst, const int16_t* gains, int1
 
 static int16_t ramp_step(struct ramp_t* ramp)
 {
+	bool target_reached;
+
     ramp->value += ramp->step;
 
-    bool target_reached = (ramp->step <= 0)
-        ? (ramp->value <= ramp->target)
-        : (ramp->value >= ramp->target);
+    target_reached = (ramp->step <= 0)
+    ? (ramp->value <= ramp->target)
+    : (ramp->value >= ramp->target);
 
     if (target_reached)
     {
@@ -79,7 +85,7 @@ static int16_t ramp_step(struct ramp_t* ramp)
         ramp->step  = 0;
     }
 
-    return (ramp->value >> 16);
+    return (int16_t)(ramp->value >> 16);
 }
 
 /* global functions */
@@ -332,14 +338,14 @@ void alist_envmix_exp(
 
     *(int16_t *)(save_buffer +  0) = wet;               /* 0-1 */
     *(int16_t *)(save_buffer +  2) = dry;               /* 2-3 */
-    *(int32_t *)(save_buffer +  4) = ramps[0].target;   /* 4-5 */
-    *(int32_t *)(save_buffer +  6) = ramps[1].target;   /* 6-7 */
+    *(int32_t *)(save_buffer +  4) = (int32_t)ramps[0].target;   /* 4-5 */
+    *(int32_t *)(save_buffer +  6) = (int32_t)ramps[1].target;   /* 6-7 */
     *(int32_t *)(save_buffer +  8) = exp_rates[0];      /* 8-9 (save_buffer is a 16bit pointer) */
     *(int32_t *)(save_buffer + 10) = exp_rates[1];      /* 10-11 */
     *(int32_t *)(save_buffer + 12) = exp_seq[0];        /* 12-13 */
     *(int32_t *)(save_buffer + 14) = exp_seq[1];        /* 14-15 */
-    *(int32_t *)(save_buffer + 16) = ramps[0].value;    /* 12-13 */
-    *(int32_t *)(save_buffer + 18) = ramps[1].value;    /* 14-15 */
+    *(int32_t *)(save_buffer + 16) = (int32_t)ramps[0].value;    /* 12-13 */
+    *(int32_t *)(save_buffer + 18) = (int32_t)ramps[1].value;    /* 14-15 */
     memcpy(hle->dram + address, (uint8_t *)save_buffer, 80);
 }
 
@@ -407,12 +413,12 @@ void alist_envmix_lin(
 
     *(int16_t *)(save_buffer +  0) = wet;            /* 0-1 */
     *(int16_t *)(save_buffer +  2) = dry;            /* 2-3 */
-    *(int16_t *)(save_buffer +  4) = ramps[0].target >> 16; /* 4-5 */
-    *(int16_t *)(save_buffer +  6) = ramps[1].target >> 16; /* 6-7 */
-    *(int32_t *)(save_buffer +  8) = ramps[0].step;  /* 8-9 (save_buffer is a 16bit pointer) */
-    *(int32_t *)(save_buffer + 10) = ramps[1].step;  /* 10-11 */
-    *(int32_t *)(save_buffer + 16) = ramps[0].value; /* 16-17 */
-    *(int32_t *)(save_buffer + 18) = ramps[1].value; /* 18-19 */
+    *(int16_t *)(save_buffer +  4) = (int16_t)ramps[0].target >> 16; /* 4-5 */
+    *(int16_t *)(save_buffer +  6) = (int16_t)ramps[1].target >> 16; /* 6-7 */
+    *(int32_t *)(save_buffer +  8) = (int32_t)ramps[0].step;  /* 8-9 (save_buffer is a 16bit pointer) */
+    *(int32_t *)(save_buffer + 10) = (int32_t)ramps[1].step;  /* 10-11 */
+    *(int32_t *)(save_buffer + 16) = (int32_t)ramps[0].value; /* 16-17 */
+    *(int32_t *)(save_buffer + 18) = (int32_t)ramps[1].value; /* 18-19 */
     memcpy(hle->dram + address, (uint8_t *)save_buffer, 80);
 }
 
@@ -429,14 +435,14 @@ void alist_envmix_nead(
         uint16_t *env_steps,
         const int16_t *xors)
 {
-    /* make sure count is a multiple of 8 */
-    count = align(count, 8);
-
     int16_t *in = (int16_t*)(hle->alist_buffer + dmemi);
     int16_t *dl = (int16_t*)(hle->alist_buffer + dmem_dl);
     int16_t *dr = (int16_t*)(hle->alist_buffer + dmem_dr);
     int16_t *wl = (int16_t*)(hle->alist_buffer + dmem_wl);
     int16_t *wr = (int16_t*)(hle->alist_buffer + dmem_wr);
+
+    /* make sure count is a multiple of 8 */
+    count = align(count, 8);
 
     if (swap_wet_LR)
         swap(&wl, &wr);
@@ -660,10 +666,14 @@ void alist_adpcm(
         uint32_t loop_address,
         uint32_t last_frame_address)
 {
-    assert((count & 0x1f) == 0);
-
     int16_t last_frame[16];
     size_t i;
+
+    adpcm_predict_frame_t predict_frame = (two_bit_per_sample)
+        ? adpcm_predict_frame_2bits
+        : adpcm_predict_frame_4bits;
+
+    assert((count & 0x1f) == 0);
 
     if (init)
         memset(last_frame, 0, 16*sizeof(last_frame[0]));
@@ -672,10 +682,6 @@ void alist_adpcm(
 
     for(i = 0; i < 16; ++i, dmemo += 2)
         *(int16_t*)(hle->alist_buffer + (dmemo ^ S16)) = last_frame[i];
-
-    adpcm_predict_frame_t predict_frame = (two_bit_per_sample)
-        ? adpcm_predict_frame_2bits
-        : adpcm_predict_frame_4bits;
 
     while (count != 0) {
         int16_t frame[16];

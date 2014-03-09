@@ -15,7 +15,7 @@
 #define _RSP_H_
 
 #ifdef _MSC_VER
-#define INLINE      __inline
+#define INLINE      __forceinline
 #define NOINLINE    __declspec(noinline)
 #define ALIGNED     _declspec(align(16))
 #else

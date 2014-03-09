@@ -21,6 +21,15 @@
     <Filter Include="rsp\Header Files\vu">
       <UniqueIdentifier>{8cfbae89-d3d4-41d5-87a9-fbccc3f6def5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="rsp_hle">
+      <UniqueIdentifier>{4dff417c-1d61-4a46-8adf-da21fc87458e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rsp_hle\Source Files">
+      <UniqueIdentifier>{6c5fbcb6-5341-4bfb-8541-9532f610a3df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rsp_hle\Header Files">
+      <UniqueIdentifier>{2545fc45-81cf-4cf1-924b-0d83e1ea5093}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\audio.c">
@@ -61,6 +70,42 @@
     </ClCompile>
     <ClCompile Include="..\..\rsp\rsp.c">
       <Filter>rsp\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\alist.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\alist_audio.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\alist_naudio.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\alist_nead.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\audio.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\cicx105.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\hle.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\jpeg.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\memory.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\mp3.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\musyx.c">
+      <Filter>rsp_hle\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\rsp_hle\plugin.c">
+      <Filter>rsp_hle\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -264,6 +309,39 @@
     </ClInclude>
     <ClInclude Include="..\..\rsp\vu\vxor.h">
       <Filter>rsp\Header Files\vu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\alist.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\alist_internal.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\arithmetics.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\audio.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\cicx105.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\hle.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\hle_external.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\hle_internal.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\jpeg.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\memory.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\musyx.h">
+      <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

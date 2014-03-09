@@ -57,41 +57,47 @@ enum {
     TASK_YIELD_DATA_SIZE    = 0xffc
 };
 
-static inline unsigned int align(unsigned int x, unsigned amount)
+#ifdef _MSC_VER
+#define INLINE      __forceinline
+#else
+#define INLINE      __attribute__((always_inline))
+#endif
+
+INLINE static unsigned int align(unsigned int x, unsigned amount)
 {
     --amount;
     return (x + amount) & ~amount;
 }
 
-static inline uint8_t* const dmem_u8(struct hle_t* hle, uint16_t address)
+INLINE static uint8_t* const dmem_u8(struct hle_t* hle, uint16_t address)
 {
     return (uint8_t*)(&hle->dmem[(address & 0xfff) ^ S8]);
 }
 
-static inline uint16_t* const dmem_u16(struct hle_t* hle, uint16_t address)
+INLINE static uint16_t* const dmem_u16(struct hle_t* hle, uint16_t address)
 {
     assert((address & 1) == 0);
     return (uint16_t*)(&hle->dmem[(address & 0xfff) ^ S16]);
 }
 
-static inline uint32_t* const dmem_u32(struct hle_t* hle, uint16_t address)
+INLINE static uint32_t* const dmem_u32(struct hle_t* hle, uint16_t address)
 {
     assert((address & 3) == 0);
     return (uint32_t*)(&hle->dmem[(address & 0xfff)]);
 }
 
-static inline uint8_t* const dram_u8(struct hle_t* hle, uint32_t address)
+INLINE static uint8_t* const dram_u8(struct hle_t* hle, uint32_t address)
 {
     return (uint8_t*)&hle->dram[(address & 0xffffff) ^ S8];
 }
 
-static inline uint16_t* const dram_u16(struct hle_t* hle, uint32_t address)
+INLINE static uint16_t* const dram_u16(struct hle_t* hle, uint32_t address)
 {
     assert((address & 1) == 0);
     return (uint16_t*)&hle->dram[(address & 0xffffff) ^ S16];
 }
 
-static inline uint32_t* const dram_u32(struct hle_t* hle, uint32_t address)
+INLINE static uint32_t* const dram_u32(struct hle_t* hle, uint32_t address)
 {
     assert((address & 3) == 0);
     return (uint32_t*)&hle->dram[address & 0xffffff];
