@@ -22,7 +22,8 @@
  * Wrong:  ACC(HI) = -((INT32)(acc) < 0)
  * Right:  ACC(HI) = -(SEMIFRAC < 0)
  */
-#define SEMIFRAC    (VS[i]*VT[i]*2/2 + 0x8000/2)
+//#define SEMIFRAC    (VS[i]*VT[i]*2/2 + 0x8000/2)
+#define SEMIFRAC    (VS[i]*VT[i]*2/2 + 0x4000)
 #endif
 
 INLINE static void do_mulf(usf_state_t * state, short* VD, short* VS, short* VT)
@@ -35,7 +36,7 @@ INLINE static void do_mulf(usf_state_t * state, short* VD, short* VS, short* VT)
         VACC_M[i] = (SEMIFRAC << 1) >> 16;
     for (i = 0; i < N; i++)
         VACC_H[i] = -((VACC_M[i] < 0) & (VS[i] != VT[i])); /* -32768 * -32768 */
-#ifndef ARCH_MIN_SSE2
+#if !defined ARCH_MIN_SSE2 && !defined ARCH_MIN_ARM_NEON
     vector_copy(VD, VACC_M);
     for (i = 0; i < N; i++)
         VD[i] -= (VACC_M[i] < 0) & (VS[i] == VT[i]); /* ACC b 31 set, min*min */

@@ -57,7 +57,87 @@ static INLINE void merge(short* VD, short* cmp, short* pass, short* fail)
     return;
 }
 
-#ifndef ARCH_MIN_SSE2
+#ifdef ARCH_MIN_ARM_NEON
+static INLINE void vector_copy(short * VD, short * VS)
+{
+    int16x8_t xmm;
+    xmm = vld1q_s16(VS);
+    vst1q_s16(VD, xmm);
+
+    return;
+}
+
+static INLINE void SIGNED_CLAMP_ADD(usf_state_t * state, short* VD, short* VS, short* VT)
+{
+    int16x8_t dst, src, vco, max, min;
+
+    src = vld1q_s16(VS);
+    dst = vld1q_s16(VT);
+    vco = vld1q_s16(state->co);
+
+    max = vmaxq_s16(dst, src);
+    min = vminq_s16(dst, src);
+
+    min = vaddq_s16(min, vco);
+    max = vaddq_s16(max, min);
+    vst1q_s16(VD, max);
+    return;
+}
+
+static INLINE void SIGNED_CLAMP_SUB(usf_state_t * state, short* VD, short* VS, short* VT)
+{
+    int16x8_t dst, src, vco, dif, res, xmm;
+
+    src = vld1q_s16(VS);
+    dst = vld1q_s16(VT);
+    vco = vld1q_s16(state->co);
+
+    res = vsubq_s16(src, dst);
+    dif = vaddq_s16(res, vco);
+    dif = veorq_s16(dif, res);
+    dif = vandq_s16(dif, dst);
+    xmm = vsubq_s16(src, dst);
+	   
+    src = vandq_s16(vmvnq_s16(src), dst);
+    xmm = vandq_s16(xmm, src);
+
+    xmm = vshrq_n_s16(xmm, 15);
+	
+    src = vandq_s16(vmvnq_s16(xmm), vco);
+    res = vsubq_s16(res,xmm);
+
+    vst1q_s16(VD, res);
+
+    return;
+}
+
+
+static INLINE void SIGNED_CLAMP_AM(usf_state_t * state, short* VD)
+{
+	int16x8_t pvs, pvd;
+	int16x8x2_t packed;
+	int16x8_t result;
+	int16x4_t low, high;
+	
+	pvs = vld1q_s16((const int16_t*)VACC_H);
+	pvd = vld1q_s16((const int16_t*)VACC_M);
+		
+	packed = vzipq_s16(pvd,pvs);
+		
+	low = vqmovn_s32((int32x4_t)packed.val[0]);
+	high = vqmovn_s32((int32x4_t)packed.val[1]);
+	
+	result = vcombine_s16(low,high);
+		
+	vst1q_s16(VD,result);
+	
+	return;
+}
+
+#endif
+
+#if !defined ARCH_MIN_SSE2 && !defined ARCH_MIN_ARM_NEON
+
 static INLINE void vector_copy(short* VD, short* VS)
 {
 #if (0)
@@ -92,6 +172,8 @@ static INLINE void SIGNED_CLAMP_ADD(usf_state_t * state, short* VD, short* VS, s
         VD[i] ^= 0x8000 & (hi[i] | lo[i]);
     return;
 }
+
+
 static INLINE void SIGNED_CLAMP_SUB(usf_state_t * state, short* VD, short* VS, short* VT)
 {
     ALIGNED int32_t dif[N];
@@ -113,8 +195,9 @@ static INLINE void SIGNED_CLAMP_SUB(usf_state_t * state, short* VD, short* VS, s
         VD[i] ^= 0x8000 & (hi[i] | lo[i]);
     return;
 }
+
 static INLINE void SIGNED_CLAMP_AM(usf_state_t * state, short* VD)
-{ /* typical sign-clamp of accumulator-mid (bits 31:16) */
+{ 
     ALIGNED short hi[N], lo[N];
     register int i;
 
@@ -135,7 +218,9 @@ static INLINE void SIGNED_CLAMP_AM(usf_state_t * state, short* VD)
         VD[i] ^= 0x8000 * (hi[i] | lo[i]);
     return;
 }
-#else
+#endif
+
+#ifdef ARCH_MIN_SSE2
 /*
  * We actually need to write explicit SSE2 code for this because GCC 4.8.1
  * (and possibly later versions) has a code generation bug with vectorizing
