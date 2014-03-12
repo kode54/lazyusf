@@ -61,7 +61,7 @@ static INLINE void merge(short* VD, short* cmp, short* pass, short* fail)
 static INLINE void vector_copy(short * VD, short * VS)
 {
     int16x8_t xmm;
-    xmm = vld1q_s16(VS);
+    xmm = vld1q_s16((const int16_t*)VS);
     vst1q_s16(VD, xmm);
 
     return;
@@ -71,15 +71,16 @@ static INLINE void SIGNED_CLAMP_ADD(usf_state_t * state, short* VD, short* VS, s
 {
     int16x8_t dst, src, vco, max, min;
 
-    src = vld1q_s16(VS);
-    dst = vld1q_s16(VT);
-    vco = vld1q_s16(state->co);
+    src = vld1q_s16((const int16_t*)VS);
+    dst = vld1q_s16((const int16_t*)VT);
+    vco = vld1q_s16((const int16_t*)state->co);
 
     max = vmaxq_s16(dst, src);
     min = vminq_s16(dst, src);
 
-    min = vaddq_s16(min, vco);
-    max = vaddq_s16(max, min);
+    min = vqaddq_s16(min, vco);
+    max = vqaddq_s16(max, min);
+
     vst1q_s16(VD, max);
     return;
 }
@@ -88,9 +89,9 @@ static INLINE void SIGNED_CLAMP_SUB(usf_state_t * state, short* VD, short* VS, s
 {
     int16x8_t dst, src, vco, dif, res, xmm;
 
-    src = vld1q_s16(VS);
-    dst = vld1q_s16(VT);
-    vco = vld1q_s16(state->co);
+    src = vld1q_s16((const int16_t*)VS);
+    dst = vld1q_s16((const int16_t*)VT);
+    vco = vld1q_s16((const int16_t*)state->co);
 
     res = vsubq_s16(src, dst);
     dif = vaddq_s16(res, vco);
@@ -98,19 +99,19 @@ static INLINE void SIGNED_CLAMP_SUB(usf_state_t * state, short* VD, short* VS, s
     dif = vandq_s16(dif, dst);
     xmm = vsubq_s16(src, dst);
 	   
-    src = vandq_s16(vmvnq_s16(src), dst);
+    //src = vandq_s16(vmvnq_s16(src), dst);
+	src = vbicq_s16(src, dif);
     xmm = vandq_s16(xmm, src);
 
     xmm = vshrq_n_s16(xmm, 15);
-	
-    src = vandq_s16(vmvnq_s16(xmm), vco);
-    res = vsubq_s16(res,xmm);
+
+	src = vbicq_s16(xmm, vco);
+    res = vsubq_s16(res, xmm);
 
     vst1q_s16(VD, res);
 
     return;
 }
-
 
 static INLINE void SIGNED_CLAMP_AM(usf_state_t * state, short* VD)
 {
