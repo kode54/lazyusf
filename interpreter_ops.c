@@ -34,7 +34,7 @@
 #ifdef _MSC_VER
 #define INLINE      __forceinline
 #else
-#define INLINE      __attribute__((always_inline))
+#define INLINE      inline __attribute__((always_inline))
 #endif
 
 #include "usf_internal.h"
