@@ -19,7 +19,7 @@
 #define NOINLINE    __declspec(noinline)
 #define ALIGNED     _declspec(align(16))
 #else
-#define INLINE      __attribute__((always_inline))
+#define INLINE      inline __attribute__((always_inline))
 #define NOINLINE    __attribute__((noinline))
 #define ALIGNED     __attribute__((aligned(16)))
 #endif
