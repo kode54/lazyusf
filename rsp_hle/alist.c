@@ -29,6 +29,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "common.h"
+
 #include "alist.h"
 #include "arithmetics.h"
 #include "audio.h"

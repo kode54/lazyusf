@@ -334,5 +334,8 @@
     <ClInclude Include="..\..\rsp_hle\ucodes.h">
       <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\common.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

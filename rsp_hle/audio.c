@@ -23,6 +23,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "common.h"
+
 #include "arithmetics.h"
 
 const int16_t RESAMPLE_LUT[64 * 4] = {

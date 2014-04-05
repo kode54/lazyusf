@@ -29,5 +29,11 @@
 #  define UNUSED(x) UNUSED_ ## x
 #endif
 
+#ifdef _MSC_VER
+#  define inline __forceinline
+#elif defined __GNUC__
+#  define inline inline __attribute__((always_inline))
+#endif
+
 #endif
 

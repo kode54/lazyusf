@@ -21,6 +21,8 @@
 
 #include <string.h>
 
+#include "common.h"
+
 #include "memory.h"
 
 /* Global functions */

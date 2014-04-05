@@ -24,6 +24,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "common.h"
+
 #include "arithmetics.h"
 #include "hle_internal.h"
 #include "memory.h"

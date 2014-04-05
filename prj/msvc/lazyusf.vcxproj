@@ -113,6 +113,7 @@
     <ClInclude Include="..\..\rsp_hle\alist.h" />
     <ClInclude Include="..\..\rsp_hle\arithmetics.h" />
     <ClInclude Include="..\..\rsp_hle\audio.h" />
+    <ClInclude Include="..\..\rsp_hle\common.h" />
     <ClInclude Include="..\..\rsp_hle\hle.h" />
     <ClInclude Include="..\..\rsp_hle\hle_external.h" />
     <ClInclude Include="..\..\rsp_hle\hle_internal.h" />
