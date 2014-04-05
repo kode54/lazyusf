@@ -58,12 +58,12 @@ static int16_t* sample(struct hle_t* hle, unsigned pos)
 
 static uint8_t* alist_u8(struct hle_t* hle, uint16_t dmem)
 {
-    return &hle->alist_buffer[dmem ^ S8];
+    return u8(hle->alist_buffer, dmem);
 }
 
 static int16_t* alist_s16(struct hle_t* hle, uint16_t dmem)
 {
-    return (int16_t*)(&hle->alist_buffer[dmem ^ S16]);
+    return (int16_t*)u16(hle->alist_buffer, dmem);
 }
 
 
@@ -82,13 +82,13 @@ static void alist_envmix_mix(size_t n, int16_t** dst, const int16_t* gains, int1
 
 static int16_t ramp_step(struct ramp_t* ramp)
 {
-	bool target_reached;
-
+    bool target_reached;
+    
     ramp->value += ramp->step;
 
     target_reached = (ramp->step <= 0)
-    ? (ramp->value <= ramp->target)
-    : (ramp->value >= ramp->target);
+        ? (ramp->value <= ramp->target)
+        : (ramp->value >= ramp->target);
 
     if (target_reached)
     {
@@ -184,7 +184,7 @@ void alist_move(struct hle_t* hle, uint16_t dmemo, uint16_t dmemi, uint16_t coun
 void alist_copy_every_other_sample(struct hle_t* hle, uint16_t dmemo, uint16_t dmemi, uint16_t count)
 {
     while (count != 0) {
-        *(uint16_t*)(alist_u8(hle, dmemo)) = *(uint16_t*)(alist_u8(hle, dmemi));
+        *alist_s16(hle, dmemo) = *alist_s16(hle, dmemi);
         dmemo += 2;
         dmemi += 4;
         --count;
@@ -413,15 +413,15 @@ void alist_envmix_ge(
         int16_t l_vol = ramp_step(&ramps[0]);
         int16_t r_vol = ramp_step(&ramps[1]);
 
-        gains[0] = clamp_s16((l_vol * dry + 0x4000) >> 15);
-        gains[1] = clamp_s16((r_vol * dry + 0x4000) >> 15);
-        gains[2] = clamp_s16((l_vol * wet + 0x4000) >> 15);
-        gains[3] = clamp_s16((r_vol * wet + 0x4000) >> 15);
-
         buffers[0] = dl + (k^S);
         buffers[1] = dr + (k^S);
         buffers[2] = wl + (k^S);
         buffers[3] = wr + (k^S);
+
+        gains[0] = clamp_s16((l_vol * dry + 0x4000) >> 15);
+        gains[1] = clamp_s16((r_vol * dry + 0x4000) >> 15);
+        gains[2] = clamp_s16((l_vol * wet + 0x4000) >> 15);
+        gains[3] = clamp_s16((r_vol * wet + 0x4000) >> 15);
 
         alist_envmix_mix(n, buffers, gains, in[k^S]);
     }
