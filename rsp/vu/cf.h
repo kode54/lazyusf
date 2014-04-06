@@ -42,7 +42,7 @@ unsigned char VCE;
  */
 
 #ifndef ARCH_MIN_SSE2
-unsigned static short get_VCO(usf_state_t * state)
+unsigned short get_VCO(usf_state_t * state)
 {
     register unsigned short VCO;
 
@@ -65,7 +65,7 @@ unsigned static short get_VCO(usf_state_t * state)
       | (state->co[0x0 % 8] << 0x0);
     return (VCO); /* Big endian becomes little. */
 }
-unsigned static short get_VCC(usf_state_t * state)
+unsigned short get_VCC(usf_state_t * state)
 {
     register unsigned short VCC;
 
@@ -88,7 +88,7 @@ unsigned static short get_VCC(usf_state_t * state)
       | (state->comp[0x0 % 8] << 0x0);
     return (VCC); /* Big endian becomes little. */
 }
-unsigned static char get_VCE(usf_state_t * state)
+unsigned char get_VCE(usf_state_t * state)
 {
     register unsigned char VCE;
 
@@ -104,7 +104,7 @@ unsigned static char get_VCE(usf_state_t * state)
     return (VCE); /* Big endian becomes little. */
 }
 #else
-unsigned static short get_VCO(usf_state_t * state)
+unsigned short get_VCO(usf_state_t * state)
 {
     __m128i xmm, hi, lo;
     register unsigned short VCO;
@@ -122,7 +122,7 @@ unsigned static short get_VCO(usf_state_t * state)
     VCO = _mm_movemask_epi8(xmm) & 0x0000FFFF; /* PMOVMSKB combines each MSB. */
     return (VCO);
 }
-unsigned static short get_VCC(usf_state_t * state)
+unsigned short get_VCC(usf_state_t * state)
 {
     __m128i xmm, hi, lo;
     register unsigned short VCC;
@@ -140,7 +140,7 @@ unsigned static short get_VCC(usf_state_t * state)
     VCC = _mm_movemask_epi8(xmm) & 0x0000FFFF; /* PMOVMSKB combines each MSB. */
     return (VCC);
 }
-unsigned static char get_VCE(usf_state_t * state)
+unsigned char get_VCE(usf_state_t * state)
 {
     __m128i xmm, hi, lo;
     register unsigned char VCE;
@@ -160,7 +160,7 @@ unsigned static char get_VCE(usf_state_t * state)
  * CTC2 resources
  * not sure how to vectorize going the other direction into SSE2
  */
-void static set_VCO(usf_state_t * state, unsigned short VCO)
+void set_VCO(usf_state_t * state, unsigned short VCO)
 {
     register int i;
 
@@ -170,7 +170,7 @@ void static set_VCO(usf_state_t * state, unsigned short VCO)
         state->ne[i] = (VCO >> (i + 0x8)) & 1;
     return; /* Little endian becomes big. */
 }
-void static set_VCC(usf_state_t * state, unsigned short VCC)
+void set_VCC(usf_state_t * state, unsigned short VCC)
 {
     register int i;
 
@@ -180,7 +180,7 @@ void static set_VCC(usf_state_t * state, unsigned short VCC)
         state->clip[i] = (VCC >> (i + 0x8)) & 1;
     return; /* Little endian becomes big. */
 }
-void static set_VCE(usf_state_t * state, unsigned char VCE)
+void set_VCE(usf_state_t * state, unsigned char VCE)
 {
     register int i;
 
