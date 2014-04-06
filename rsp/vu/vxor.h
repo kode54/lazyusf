@@ -13,8 +13,21 @@
 \******************************************************************************/
 #include "vu.h"
 
-INLINE static void do_xor(usf_state_t * state, short* VD, short* VS, short* VT)
+INLINE void do_xor(usf_state_t * state, short* VD, short* VS, short* VT)
 {
+
+#ifdef ARCH_MIN_ARM_NEON
+
+	int16x8_t vs, vt;
+	vs = vld1q_s16((const int16_t*)VS);
+	vt = vld1q_s16((const int16_t*)VT);
+	vs = veorq_s16(vs, vt);
+	vst1q_s16(VACC_L, vs);
+	vector_copy(VD, VACC_L);
+
+	return;
+#endif
+
     register int i;
 
     for (i = 0; i < N; i++)

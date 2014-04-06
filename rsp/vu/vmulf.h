@@ -22,12 +22,44 @@
  * Wrong:  ACC(HI) = -((INT32)(acc) < 0)
  * Right:  ACC(HI) = -(SEMIFRAC < 0)
  */
-//#define SEMIFRAC    (VS[i]*VT[i]*2/2 + 0x8000/2)
-#define SEMIFRAC    (VS[i]*VT[i]*2/2 + 0x4000)
+
+#define SEMIFRAC    (VS[i]*VT[i] + 0x4000)
 #endif
 
 INLINE static void do_mulf(usf_state_t * state, short* VD, short* VS, short* VT)
 {
+
+#ifdef ARCH_MIN_ARM_NEON
+
+	int16x8_t vs,vt,res,four,zero,vacc_l, vacc_m, vacc_h;
+	uint16x8_t cond_u, vacc_m_cond_u,one;
+	   
+	one = vdupq_n_u16(1);
+    four = vdupq_n_s16(0x4000);
+    zero = vdupq_n_s16(0);
+   
+    vs = vld1q_s16((const int16_t *)VS);
+    vt = vld1q_s16((const int16_t *)VT);
+
+    vacc_m = vqrdmulhq_s16(vs, vt);
+    vacc_l = vmlaq_s16(four, vs,vt);
+    vacc_l = vshlq_n_s16(vacc_l,1);
+   
+    cond_u = vceqq_s16(vs,vt);
+    cond_u = vaddq_u16(cond_u, one);
+    vacc_m_cond_u = vcltq_s16(vacc_m, zero);
+    cond_u = vandq_u16(vacc_m_cond_u, cond_u);
+    vacc_h = vqnegq_s16((int16x8_t)cond_u);
+
+	vst1q_s16(VACC_L,vacc_l);
+	vst1q_s16(VACC_M,vacc_m);
+	vst1q_s16(VACC_H,vacc_h);
+	
+	SIGNED_CLAMP_AM(state, VD);
+	return;
+	
+#endif
+
     register int i;
 
     for (i = 0; i < N; i++)
