@@ -313,16 +313,10 @@
     <ClInclude Include="..\..\rsp_hle\alist.h">
       <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\rsp_hle\alist_internal.h">
-      <Filter>rsp_hle\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\rsp_hle\arithmetics.h">
       <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\rsp_hle\audio.h">
-      <Filter>rsp_hle\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\rsp_hle\cicx105.h">
       <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\rsp_hle\hle.h">
@@ -334,13 +328,13 @@
     <ClInclude Include="..\..\rsp_hle\hle_internal.h">
       <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\rsp_hle\jpeg.h">
-      <Filter>rsp_hle\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\rsp_hle\memory.h">
       <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\rsp_hle\musyx.h">
+    <ClInclude Include="..\..\rsp_hle\ucodes.h">
+      <Filter>rsp_hle\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\rsp_hle\common.h">
       <Filter>rsp_hle\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

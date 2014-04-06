@@ -29,7 +29,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "alist_internal.h"
+#include "common.h"
+
+#include "alist.h"
 #include "hle_internal.h"
 #include "memory.h"
 
@@ -52,7 +54,7 @@ static void clear_segments(struct hle_t* hle)
 }
 
 /* audio commands definition */
-static void SPNOOP(struct hle_t* hle, uint32_t w1, uint32_t w2)
+static void SPNOOP(struct hle_t* UNUSED(hle), uint32_t UNUSED(w1), uint32_t UNUSED(w2))
 {
 }
 
@@ -73,6 +75,25 @@ static void ENVMIXER(struct hle_t* hle, uint32_t w1, uint32_t w2)
     uint32_t address = get_address(hle, w2);
 
     alist_envmix_exp(
+            hle,
+            flags & A_INIT,
+            flags & A_AUX,
+            hle->alist_audio.out, hle->alist_audio.dry_right,
+            hle->alist_audio.wet_left, hle->alist_audio.wet_right,
+            hle->alist_audio.in, hle->alist_audio.count,
+            hle->alist_audio.dry, hle->alist_audio.wet,
+            hle->alist_audio.vol,
+            hle->alist_audio.target,
+            hle->alist_audio.rate,
+            address);
+}
+
+static void ENVMIXER_GE(struct hle_t* hle, uint32_t w1, uint32_t w2)
+{
+    uint8_t  flags   = (w1 >> 16);
+    uint32_t address = get_address(hle, w2);
+
+    alist_envmix_ge(
             hle,
             flags & A_INIT,
             flags & A_AUX,
@@ -123,7 +144,7 @@ static void SETVOL(struct hle_t* hle, uint32_t w1, uint32_t w2)
     }
 }
 
-static void SETLOOP(struct hle_t* hle, uint32_t w1, uint32_t w2)
+static void SETLOOP(struct hle_t* hle, uint32_t UNUSED(w1), uint32_t w2)
 {
     hle->alist_audio.loop = get_address(hle, w2);
 }
@@ -146,7 +167,7 @@ static void ADPCM(struct hle_t* hle, uint32_t w1, uint32_t w2)
             address);
 }
 
-static void LOADBUFF(struct hle_t* hle, uint32_t w1, uint32_t w2)
+static void LOADBUFF(struct hle_t* hle, uint32_t UNUSED(w1), uint32_t w2)
 {
     uint32_t address = get_address(hle, w2);
 
@@ -156,7 +177,7 @@ static void LOADBUFF(struct hle_t* hle, uint32_t w1, uint32_t w2)
     alist_load(hle, hle->alist_audio.in, address, hle->alist_audio.count);
 }
 
-static void SAVEBUFF(struct hle_t* hle, uint32_t w1, uint32_t w2)
+static void SAVEBUFF(struct hle_t* hle, uint32_t UNUSED(w1), uint32_t w2)
 {
     uint32_t address = get_address(hle, w2);
 
@@ -201,7 +222,7 @@ static void LOADADPCM(struct hle_t* hle, uint32_t w1, uint32_t w2)
     dram_load_u16(hle, (uint16_t*)hle->alist_audio.table, address, align(count, 8) >> 1);
 }
 
-static void INTERLEAVE(struct hle_t* hle, uint32_t w1, uint32_t w2)
+static void INTERLEAVE(struct hle_t* hle, uint32_t UNUSED(w1), uint32_t w2)
 {
     uint16_t left  = (w2 >> 16) + DMEM_BASE;
     uint16_t right = w2 + DMEM_BASE;
@@ -224,7 +245,7 @@ static void MIXER(struct hle_t* hle, uint32_t w1, uint32_t w2)
     alist_mix(hle, dmemo, dmemi, align(hle->alist_audio.count, 32), gain);
 }
 
-static void SEGMENT(struct hle_t* hle, uint32_t w1, uint32_t w2)
+static void SEGMENT(struct hle_t* hle, uint32_t UNUSED(w1), uint32_t w2)
 {
     set_address(hle, w2);
 }
@@ -265,9 +286,8 @@ void alist_process_audio(struct hle_t* hle)
 
 void alist_process_audio_ge(struct hle_t* hle)
 {
-    /* TODO: see what differs from alist_process_audio */
     static const acmd_callback_t ABI[0x10] = {
-        SPNOOP,         ADPCM ,         CLEARBUFF,      ENVMIXER,
+        SPNOOP,         ADPCM ,         CLEARBUFF,      ENVMIXER_GE,
         LOADBUFF,       RESAMPLE,       SAVEBUFF,       SEGMENT,
         SETBUFF,        SETVOL,         DMEMMOVE,       LOADADPCM,
         MIXER,          INTERLEAVE,     POLEF,          SETLOOP
@@ -279,9 +299,8 @@ void alist_process_audio_ge(struct hle_t* hle)
 
 void alist_process_audio_bc(struct hle_t* hle)
 {
-    /* TODO: see what differs from alist_process_audio */
     static const acmd_callback_t ABI[0x10] = {
-        SPNOOP,         ADPCM ,         CLEARBUFF,      ENVMIXER,
+        SPNOOP,         ADPCM ,         CLEARBUFF,      ENVMIXER_GE,
         LOADBUFF,       RESAMPLE,       SAVEBUFF,       SEGMENT,
         SETBUFF,        SETVOL,         DMEMMOVE,       LOADADPCM,
         MIXER,          INTERLEAVE,     POLEF,          SETLOOP
