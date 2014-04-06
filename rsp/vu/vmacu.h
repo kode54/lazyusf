@@ -82,7 +82,7 @@ INLINE static void do_macu(usf_state_t * state, short* VD, short* VS, short* VT)
 	vst1q_s16(VACC_M, (int16x8_t)v_vaccm);
 	vst1q_s16(VACC_H, (int16x8_t)v_vacch);
 		
-	SIGNED_CLAMP_AM(state, VD);
+	UNSIGNED_CLAMP(state, VD);
 	return;
 	
 #endif
